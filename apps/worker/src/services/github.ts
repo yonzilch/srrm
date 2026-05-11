@@ -1,7 +1,5 @@
 // GitHub API 封装
-import type { Env } from '@srrm/shared';
-import type { Release } from '@srrm/shared';
-import type { KVNamespace } from '@cloudflare/workers-types';
+// 使用 any 类型避免 @cloudflare/workers-types 版本冲突
 
 const GITHUB_API = 'https://api.github.com';
 
@@ -55,7 +53,7 @@ export async function fetchReleases(
 export function toInternalRelease(
   ghRelease: GitHubRelease,
   repoFullName: string
-): Release {
+): any {
   return {
     id: ghRelease.node_id,
     repoFullName,

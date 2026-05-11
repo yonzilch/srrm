@@ -18,20 +18,20 @@ export const authRoutes = new Hono<{ Bindings: Env }>();
 authRoutes.get('/login', (c) => {
   const { SSO_ISSUER_URL, SSO_CLIENT_ID, SSO_CALLBACK_URL } = c.env;
 
-  if (!SSO_ISSUER_URL || !SSO_CLIENT_ID) {
+  if (!SSO_ISSUER_URL || !SSO_CLIENT_ID || !SSO_CALLBACK_URL) {
     return c.json({ error: 'SSO not configured' }, 500);
   }
 
   const scope = 'openid email profile';
   const state = Math.random().toString(36).substring(2, 15);
-  const redirectUri = `${SSO_ISSUER_URL}/protocol/openid-connect/auth?` +
-    new URLSearchParams({
-      response_type: 'code',
-      client_id: SSO_CLIENT_ID,
-      redirect_uri: SSO_CALLBACK_URL,
-      scope,
-      state,
-    });
+  const urlParams = new URLSearchParams({
+    response_type: 'code',
+    client_id: SSO_CLIENT_ID,
+    redirect_uri: SSO_CALLBACK_URL,
+    scope,
+    state,
+  });
+  const redirectUri = `${SSO_ISSUER_URL}/protocol/openid-connect/auth?${urlParams.toString()}`;
 
   c.header('Set-Cookie', `oauth_state=${state}; HttpOnly; Path=/; MaxAge=600`);
   return c.redirect(redirectUri);
@@ -52,17 +52,23 @@ authRoutes.get('/callback', async (c) => {
     return c.json({ error: 'Missing code' }, 400);
   }
 
+  if (!SSO_ISSUER_URL || !SSO_CLIENT_ID || !SSO_CLIENT_SECRET || !SSO_CALLBACK_URL || !ADMIN_EMAILS || !JWT_SECRET) {
+    return c.json({ error: 'SSO not configured properly' }, 500);
+  }
+
   try {
+    const tokenParams = new URLSearchParams({
+      grant_type: 'authorization_code',
+      client_id: SSO_CLIENT_ID,
+      client_secret: SSO_CLIENT_SECRET,
+      code,
+      redirect_uri: SSO_CALLBACK_URL,
+    });
+
     const tokenResponse = await fetch(`${SSO_ISSUER_URL}/protocol/openid-connect/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        client_id: SSO_CLIENT_ID,
-        client_secret: SSO_CLIENT_SECRET,
-        code,
-        redirect_uri: SSO_CALLBACK_URL,
-      }),
+      body: tokenParams,
     });
 
     if (!tokenResponse.ok) {

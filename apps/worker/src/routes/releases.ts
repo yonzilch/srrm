@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { getReleases } from '../services/kv';
+import { getReleases, getRepos } from '../services/kv';
 import type { Env } from '@srrm/shared';
 import type { Release } from '@srrm/shared';
 
@@ -11,7 +11,7 @@ releasesRoutes.get('/', async (c) => {
     const pageNum = Math.max(1, parseInt(page));
     const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
 
-    const releases: Release[] = await getReleases(c.env.KV);
+    const releases: Release[] = (await getReleases(c.env.KV as any)) as Release[];
 
     let filtered: Release[] = releases;
     if (date) {
@@ -41,7 +41,7 @@ releasesRoutes.get('/', async (c) => {
 releasesRoutes.get('/:id', async (c) => {
   const { id } = c.req.param();
   try {
-    const releases: Release[] = await getReleases(c.env.KV);
+    const releases: Release[] = (await getReleases(c.env.KV as any)) as Release[];
 
     const release = releases.find((r: Release) => r.id === id);
 

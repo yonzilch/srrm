@@ -59,7 +59,7 @@ function generateAtom(releases: Release[], baseUrl: string): string {
 feedRoute.get('/', async (c) => {
   try {
     const { repo } = c.req.query();
-    const releases = await getReleases(c.env.KV);
+    const releases = await getReleases(c.env.KV as any);
 
     let filtered: Release[] = releases;
     if (repo) {
@@ -70,7 +70,8 @@ feedRoute.get('/', async (c) => {
 
     const limited = filtered.slice(0, 50);
 
-    const xml = generateRSS(limited, c.env.APP_BASE_URL);
+    const baseUrl = c.env.APP_BASE_URL || '';
+    const xml = generateRSS(limited, baseUrl);
 
     return c.body(xml, 200, {
       'Content-Type': 'application/xml; charset=utf-8',
