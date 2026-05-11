@@ -1,3 +1,4 @@
+import { Hono } from 'hono';
 import { verifyToken } from '../services/jwt';
 import type { Env } from '@srrm/shared';
 import type { User } from '@srrm/shared';

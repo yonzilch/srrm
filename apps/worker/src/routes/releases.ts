@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { getReleases, getRepos } from '../services/kv';
+import { getReleases } from '../services/kv';
 import type { Env } from '@srrm/shared';
 import type { Release } from '@srrm/shared';
 

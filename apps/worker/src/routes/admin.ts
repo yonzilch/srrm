@@ -8,7 +8,7 @@ export const adminRoutes = new Hono<{ Bindings: Env }>();
 
 adminRoutes.get('/repos', async (c) => {
   try {
-    const repos: Repo[] = (await getRepos(c.env.KV as any)) as Repo[];
+    const repos: Repo[] = await getRepos(c.env.KV);
     return c.json({ repos });
   } catch (err) {
     console.error('[Admin Repos Get Error]', err);
@@ -24,7 +24,7 @@ adminRoutes.post('/repos', async (c) => {
       return c.json({ error: 'Owner and repo are required' }, 400);
     }
 
-    const repos: Repo[] = (await getRepos(c.env.KV as any)) as Repo[];
+    const repos: Repo[] = await getRepos(c.env.KV);
     const exists = repos.some((r: Repo) => r.owner.toLowerCase() === owner.toLowerCase() && r.repo.toLowerCase() === repo.toLowerCase());
 
     if (exists) {
@@ -41,7 +41,7 @@ adminRoutes.post('/repos', async (c) => {
     };
 
     repos.push(newRepo);
-    await saveRepos(c.env.KV as any, repos);
+    await saveRepos(c.env.KV, repos);
 
     return c.json(newRepo, 201);
   } catch (err) {
@@ -53,7 +53,7 @@ adminRoutes.post('/repos', async (c) => {
 adminRoutes.delete('/repos/:id', async (c) => {
   try {
     const { id } = c.req.param();
-    const repos: Repo[] = (await getRepos(c.env.KV as any)) as Repo[];
+    const repos: Repo[] = await getRepos(c.env.KV);
 
     const filtered = repos.filter((r: Repo) => r.id !== id);
 
@@ -61,7 +61,7 @@ adminRoutes.delete('/repos/:id', async (c) => {
       return c.json({ error: 'Repo not found' }, 404);
     }
 
-    await saveRepos(c.env.KV as any, filtered);
+    await saveRepos(c.env.KV, filtered);
     return c.status(204);
   } catch (err) {
     console.error('[Admin Repos Delete Error]', err);
