@@ -208,7 +208,6 @@ for (const release of newReleases) {
 - [ ] 配置 `wrangler.toml`：KV 绑定、Cron、环境变量占位
 - [ ] Cloudflare Pages 项目初始化（Vite + React + Tailwind）
 - [ ] 建立 monorepo 目录结构（见下方）
-- [ ] CI/CD：GitHub Actions → `wrangler deploy` + Pages 自动部署
 
 ### Phase 1 · 认证模块
 
