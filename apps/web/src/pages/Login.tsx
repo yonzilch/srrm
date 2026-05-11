@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { api } from '../api/client';
 import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
@@ -7,22 +6,26 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const handleLogin = async () => {
+  const handleLogin = () => {
     setLoading(true);
     setError(null);
-    try {
-      const { url } = await api.auth.login();
-      // 重定向到SSO提供商
-      window.location.href = url;
-    } catch (err: any) {
-      setError(err.message || 'Login failed');
-    } finally {
-      setLoading(false);
-    }
+    // 跳转到 Hono 的 /api/auth/login 路由，由服务端重定向到 SSO 提供商
+    // SSO 回调完成后会在 Cookie 中写入 JWT
+    window.location.href = '/api/auth/login';
   };
 
-  // 检查是否已经登录（通过检查路由参数或自动重定向）
-  // 实际应用中，这应该在路由守卫或useAuth中处理
+  // 检查是否从 SSO 回调返回（Cookie 已写入）
+  const handleCheckAuth = async () => {
+    try {
+      const res = await fetch('/api/auth/me', { credentials: 'include' });
+      const data = await res.json();
+      if (data.authenticated) {
+        navigate('/');
+      }
+    } catch {
+      // ignore
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
