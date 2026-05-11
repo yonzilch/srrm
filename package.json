@@ -1,0 +1,18 @@
+{
+  "name": "srrm",
+  "private": true,
+  "scripts": {
+    "dev:worker": "pnpm --filter @srrm/worker dev",
+    "dev:web": "pnpm --filter @srrm/web dev",
+    "build": "pnpm --filter @srrm/shared build && pnpm --filter @srrm/worker build && pnpm --filter @srrm/web build",
+    "deploy:worker": "pnpm --filter @srrm/worker deploy",
+    "deploy:web": "pnpm run build && pnpm --filter @srrm/web deploy",
+    "lint": "eslint .",
+    "typecheck": "pnpm --filter @srrm/worker tsc --noEmit && pnpm --filter @srrm/shared tsc --noEmit && pnpm --filter @srrm/web tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "~5.7.2",
+    "eslint": "^9.17.0",
+    "@eslint/js": "^9.17.0"
+  }
+}
