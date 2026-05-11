@@ -1,8 +1,11 @@
-import { Navigate } from 'react-router-dom';
+import React from 'react';
+import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from './hooks/useAuth';
 
-export const AdminGuard = ({ children }: { children: React.ReactNode }) => {
-  // This is a placeholder - in a real app we'd use useAuth hook
-  // For now, we'll assume the user is admin if they have a token
-  // In practice, this should be implemented in the component using it
-  return <>{children}</>;
+export const AdminGuard = () => {
+  const { data: user, isLoading } = useAuth();
+
+  if (isLoading) return <div>Loading...</div>;
+  if (!user || user.role !== 'admin') return <Navigate to="/login" replace />;
+  return <Outlet />;
 };

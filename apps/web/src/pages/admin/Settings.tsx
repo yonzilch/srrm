@@ -1,5 +1,6 @@
+import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { useState } from 'react';
+import type { User } from '@srrm/shared';
 
 export default function Settings() {
   const { data: user } = useAuth();

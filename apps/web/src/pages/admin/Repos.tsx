@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { useAdminRepos } from '../../hooks/useRepos';
+import React, { useState } from 'react';
+import AddRepoForm from '../../components/AddRepoForm';
+import RepoTable from '../../components/RepoTable';
 import { useAuth } from '../../hooks/useAuth';
-import { AddRepoForm } from '../../components/AddRepoForm';
-import { RepoTable } from '../../components/RepoTable';
-import { ScrapeStatus } from '../../components/ScrapeStatus';
+import { useAdminRepos } from '../../hooks/useReleases';
+import type { Repo } from '@srrm/shared';
 
 export default function Repos() {
   const { data: user } = useAuth();
@@ -11,6 +11,11 @@ export default function Repos() {
 
   if (isLoading) return <div>Loading repositories...</div>;
   if (error) return <div>Error loading repositories: {error.message}</div>;
+
+  const handleRemove = (id: string) => {
+    // TODO: implement remove
+    console.log('Remove repo with id:', id);
+  };
 
   return (
     <div className="space-y-6">
@@ -23,17 +28,9 @@ export default function Repos() {
 
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Monitored Repositories ({repos.length})</h2>
-        <ScrapeStatus onTrigger={() => {
-          // Trigger scrape and then refetch releases
-          // We would need a separate hook for triggering scrape
-          console.log('Trigger scrape');
-        }} />
       </div>
 
-      <RepoTable repos={repos} onRemove={(id) => {
-        console.log('Remove repo with id:', id);
-        // In a real app, we would call the delete API and then refetch
-      }} />
+      <RepoTable repos={repos} onRemove={handleRemove} />
     </div>
   );
 }

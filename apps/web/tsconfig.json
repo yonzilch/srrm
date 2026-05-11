@@ -4,6 +4,7 @@
     "outDir": "dist",
     "rootDir": "src",
     "types": ["vite/client"],
+    "jsx": "react-jsx",
     "module": "esnext"
   },
   "include": ["src"],

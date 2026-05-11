@@ -1,10 +1,9 @@
-import { useReleases } from '../hooks/useReleases';
-import { useAdminRepos } from '../hooks/useAdminRepos';
-import { useTriggerScrape } from '../hooks/useTriggerScrape';
+import React, { useState } from 'react';
+import { useReleases, useAdminRepos, useTriggerScrape } from '../hooks/useReleases';
 import ReleaseTimeline from '../components/ReleaseTimeline';
 import RepoFilterBar from '../components/RepoFilterBar';
 import FeedSubscribeButton from '../components/FeedSubscribeButton';
-import { useState } from 'react';
+import type { Repo } from '@srrm/shared';
 
 export default function Home() {
   const { data: releases, isLoading, error } = useReleases();
@@ -15,10 +14,17 @@ export default function Home() {
   if (isLoading) return <div>Loading releases...</div>;
   if (error) return <div>Error loading releases: {error.message}</div>;
 
-  const repoOptions = repos.map(r => ({
+  const repoOptions: { label: string; value: string }[] = repos.map((r: Repo) => ({
     label: r.fullName,
     value: r.fullName,
   }));
+
+  const filteredReleases = releases
+    ? releases.filter((r) => {
+        if (!filter) return true;
+        return r.repoFullName.toLowerCase().includes(filter.toLowerCase());
+      })
+    : [];
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -40,11 +46,11 @@ export default function Home() {
         <RepoFilterBar
           options={repoOptions}
           value={filter}
-          onChange={(e) => setFilter(e.target.value)}
+          onChange={setFilter}
         />
 
-        {releases.length > 0 ? (
-          <ReleaseTimeline releases={releases} filter={filter} />
+        {filteredReleases.length > 0 ? (
+          <ReleaseTimeline releases={filteredReleases} filter={filter} />
         ) : (
           <div className="text-center py-12">
             <p className="text-gray-500">No releases found. Add some repositories in the admin panel.</p>
