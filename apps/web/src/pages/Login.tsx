@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
@@ -14,18 +14,21 @@ export default function Login() {
     window.location.href = '/api/auth/login';
   };
 
-  // 检查是否从 SSO 回调返回（Cookie 已写入）
-  const handleCheckAuth = async () => {
-    try {
-      const res = await fetch('/api/auth/me', { credentials: 'include' });
-      const data = await res.json();
-      if (data.authenticated) {
-        navigate('/');
+  // 页面加载时检查是否刚从 SSO 回调返回（Cookie 已写入）
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        const data = await res.json();
+        if (data.authenticated) {
+          navigate('/', { replace: true });
+        }
+      } catch {
+        // ignore — 未认证，停留在登录页
       }
-    } catch {
-      // ignore
-    }
-  };
+    };
+    checkAuth();
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

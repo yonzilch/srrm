@@ -9,7 +9,6 @@ export interface Env {
   GITHUB_TOKEN?: string;
 
   // SSO / OIDC Configuration
-  SSO_PROVIDER?: string;
   SSO_ISSUER_URL?: string;
   SSO_CLIENT_ID?: string;
   SSO_CLIENT_SECRET?: string;

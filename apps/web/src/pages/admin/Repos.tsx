@@ -6,7 +6,7 @@ import { useAdminRepos } from '../../hooks/useReleases';
 import type { Repo } from '@srrm/shared';
 
 export default function Repos() {
-  const { data: user } = useAuth();
+  const { user } = useAuth();
   const { data: repos = [], isLoading, error, refetch } = useAdminRepos();
 
   if (isLoading) return <div>Loading repositories...</div>;

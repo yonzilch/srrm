@@ -11,9 +11,10 @@ export default defineConfig({
   preview: {
     port: 5174,
   },
+  // VITE_API_BASE 由运行时注入（见 public/index.html），不在构建时硬编码
   define: {
     'import.meta.env.VITE_API_BASE': JSON.stringify(
-      process.env.VITE_API_BASE || 'http://localhost:8787'
+      process.env.VITE_API_BASE || ''
     ),
   },
 });

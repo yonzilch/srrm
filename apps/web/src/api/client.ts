@@ -18,14 +18,30 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T;
 }
 
+interface PaginatedResponse<T> {
+  releases: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
 export const api = {
   releases: {
-    list: (params?: { date?: string; repo?: string }) =>
-      request<Release[]>(`/api/releases?${new URLSearchParams(params as any)}`),
+    list: async (params?: { date?: string; repo?: string }): Promise<Release[]> => {
+      const qs = new URLSearchParams(params as any);
+      const result = await request<PaginatedResponse<Release>>(`/api/releases?${qs}`);
+      return result.releases;
+    },
   },
   admin: {
     repos: {
-      list: () => request<Repo[]>('/api/admin/repos'),
+      list: async () => {
+        const result = await request<{ repos: Repo[] }>('/api/admin/repos');
+        return result.repos;
+      },
       add: (body: { owner: string; repo: string }) =>
         request<Repo>('/api/admin/repos', { method: 'POST', body: JSON.stringify(body) }),
       remove: (id: string) =>

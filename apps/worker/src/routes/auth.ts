@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { createToken, verifyToken } from '../services/jwt';
+import { getOIDCConfig } from '../services/oidc';
 import type { Env } from '@srrm/shared';
 
 function getTokenFromCookie(c: any): string | null {
@@ -15,26 +16,35 @@ function getTokenFromCookie(c: any): string | null {
 export const authRoutes = new Hono<{ Bindings: Env }>();
 
 // 登录 - 重定向到 SSO 提供商
-authRoutes.get('/login', (c) => {
+authRoutes.get('/login', async (c) => {
   const { SSO_ISSUER_URL, SSO_CLIENT_ID, SSO_CALLBACK_URL } = c.env;
 
   if (!SSO_ISSUER_URL || !SSO_CLIENT_ID || !SSO_CALLBACK_URL) {
     return c.json({ error: 'SSO not configured' }, 500);
   }
 
-  const scope = 'openid email profile';
-  const state = Math.random().toString(36).substring(2, 15);
-  const urlParams = new URLSearchParams({
-    response_type: 'code',
-    client_id: SSO_CLIENT_ID,
-    redirect_uri: SSO_CALLBACK_URL,
-    scope,
-    state,
-  });
-  const redirectUri = `${SSO_ISSUER_URL}/protocol/openid-connect/auth?${urlParams.toString()}`;
+  try {
+    const oidcConfig = await getOIDCConfig(SSO_ISSUER_URL);
 
-  c.header('Set-Cookie', `oauth_state=${state}; HttpOnly; Path=/; MaxAge=600`);
-  return c.redirect(redirectUri);
+    const scope = 'openid email profile';
+    const state = Math.random().toString(36).substring(2, 15);
+    const urlParams = new URLSearchParams({
+      response_type: 'code',
+      client_id: SSO_CLIENT_ID,
+      redirect_uri: SSO_CALLBACK_URL,
+      scope,
+      state,
+    });
+
+    c.header(
+      'Set-Cookie',
+      `oauth_state=${state}; HttpOnly; Path=/; SameSite=None; Secure; MaxAge=600`
+    );
+    return c.redirect(`${oidcConfig.authorization_endpoint}?${urlParams.toString()}`);
+  } catch (err: unknown) {
+    console.error('[OIDC Config Error]', err instanceof Error ? err.message : err);
+    return c.json({ error: 'Failed to discover OIDC provider' }, 500);
+  }
 });
 
 // SSO 回调处理
@@ -57,6 +67,8 @@ authRoutes.get('/callback', async (c) => {
   }
 
   try {
+    const oidcConfig = await getOIDCConfig(SSO_ISSUER_URL);
+
     const tokenParams = new URLSearchParams({
       grant_type: 'authorization_code',
       client_id: SSO_CLIENT_ID,
@@ -65,7 +77,7 @@ authRoutes.get('/callback', async (c) => {
       redirect_uri: SSO_CALLBACK_URL,
     });
 
-    const tokenResponse = await fetch(`${SSO_ISSUER_URL}/protocol/openid-connect/token`, {
+    const tokenResponse = await fetch(oidcConfig.token_endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: tokenParams,
@@ -78,7 +90,7 @@ authRoutes.get('/callback', async (c) => {
     const tokenData = (await tokenResponse.json()) as { access_token: string };
     const accessToken = tokenData.access_token;
 
-    const userResponse = await fetch(`${SSO_ISSUER_URL}/protocol/openid-connect/userinfo`, {
+    const userResponse = await fetch(oidcConfig.userinfo_endpoint, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
@@ -86,8 +98,11 @@ authRoutes.get('/callback', async (c) => {
       throw new Error(`Failed to fetch user info: ${userResponse.status}`);
     }
 
-    const userInfo = (await userResponse.json()) as { email: string };
-    const email = userInfo.email;
+    const userInfo = (await userResponse.json()) as { email?: string; preferred_username?: string };
+    const email = userInfo.email ?? userInfo.preferred_username;
+    if (!email) {
+      throw new Error('No email found in user info');
+    }
 
     const adminEmails = ADMIN_EMAILS.split(',').map((e: string) => e.trim());
     const role: 'admin' | 'viewer' = adminEmails.includes(email) ? 'admin' : 'viewer';

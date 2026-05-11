@@ -3,7 +3,7 @@ import { useAuth } from '../../hooks/useAuth';
 import type { User } from '@srrm/shared';
 
 export default function Settings() {
-  const { data: user } = useAuth();
+  const { user } = useAuth();
 
   return (
     <div className="space-y-6">
