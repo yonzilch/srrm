@@ -5,8 +5,11 @@ export interface Env {
   // Auth - JWT Secret
   JWT_SECRET: string;
 
-  // GitHub
-  GITHUB_TOKEN?: string;
+  // Platform Tokens（均为可选，公开仓库不需要）
+  GITHUB_TOKEN?: string;   // GitHub 仓库（建议填写防限流）
+  GITLAB_TOKEN?: string;   // GitLab 实例 token
+  FORGEJO_TOKEN?: string;  // Forgejo/Codeberg token
+  GITEA_TOKEN?: string;    // 通用 Gitea token
 
   // SSO / OIDC Configuration
   SSO_ISSUER_URL?: string;
