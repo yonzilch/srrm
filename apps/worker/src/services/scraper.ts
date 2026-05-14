@@ -1,17 +1,13 @@
 // 抓取核心逻辑 — 使用 Atom Feed 替代 GitHub API
 import {
   getRepos,
-  getReleasesByDate,
-  saveReleasesByDate,
-  getLatestReleases,
-  updateLatestReleases,
-  getReleasesIndex,
-  updateReleasesIndex,
-} from './kv';
-import { saveLastRun } from './kv';
+  upsertReleases,
+  getLastRun,
+  saveLastRun,
+} from './db';
 import { buildFeedUrl, buildAuthHeaders, buildReleaseUrl } from './platform';
 import { parseFeed, isPrerelease } from './atom';
-import { markdownToHtml } from '@srrm/shared';
+import { parseMarkdown as markdownToHtml } from '@srrm/shared';
 import type { Env, Repo, Release } from '@srrm/shared';
 
 /** 按 publishedAt 日期分组 */
@@ -30,7 +26,6 @@ function groupByDate(releases: Release[]): Record<string, Release[]> {
 
 /** 从 Atom entry 中提取 tag name */
 function extractTagName(entry: { link: string; id: string }, repo: Repo): string {
-  // 从 link 末段提取 tag name
   try {
     const url = new URL(entry.link);
     const parts = url.pathname.split('/').filter(Boolean);
@@ -40,7 +35,6 @@ function extractTagName(entry: { link: string; id: string }, repo: Repo): string
   } catch {
     // ignore
   }
-  // fallback: 从 id 提取
   const parts = entry.id.split('/');
   return parts[parts.length - 1] || entry.id;
 }
@@ -94,7 +88,7 @@ async function fetchRepoReleases(repo: Repo, env: Env): Promise<Release[]> {
 export async function runScraper(env: Env): Promise<void> {
   console.log('[Scraper] Starting release scrape...');
 
-  const repos: Repo[] = await getRepos(env.KV as any);
+  const repos: Repo[] = await getRepos(env.DB as any);
   if (repos.length === 0) {
     console.log('[Scraper] No repos configured, skipping');
     return;
@@ -108,7 +102,7 @@ export async function runScraper(env: Env): Promise<void> {
       .catch((err: unknown) => {
         console.error('[Scraper] Failed to fetch ' + repo.fullName + ' (' + repo.platform + '):', err);
         return [] as Release[];
-      })
+      }),
   );
 
   const repoResults = await Promise.all(promises);
@@ -118,32 +112,32 @@ export async function runScraper(env: Env): Promise<void> {
 
   if (newReleases.length === 0) {
     console.log('[Scraper] No new releases found');
-    await updateLatestReleases(env.KV as any, []);
     return;
   }
 
   console.log('[Scraper] Found ' + newReleases.length + ' new releases');
 
-  // 按日期分组写入
+  // 按日期分组写入 D1（使用 upsertReleases 替代旧 KV 分片逻辑）
   const byDate = groupByDate(newReleases);
   const dates = Object.keys(byDate);
   for (let i = 0; i < dates.length; i++) {
     const date = dates[i];
-    await saveReleasesByDate(env.KV as any, date, byDate[date]);
-    await updateReleasesIndex(env.KV as any, date);
+    const batchReleases = byDate[date];
+    // 每批最多 100 条写入
+    for (let j = 0; j < batchReleases.length; j += 100) {
+      const chunk = batchReleases.slice(j, j + 100);
+      await upsertReleases(env.DB as any, chunk);
+    }
   }
 
-  // 更新 releases:latest
-  await updateLatestReleases(env.KV as any, newReleases);
-
   // 更新最后抓取时间
-  await saveLastRun(env.KV as any, Date.now());
+  await saveLastRun(env.DB as any, Date.now());
   console.log('[Scraper] Scrape completed');
 }
 
 /**
  * 抓取单个仓库的 releases（添加仓库后自动触发）
- * 只抓取这一个仓库，完成后更新 releases:latest 和对应日期分片
+ * 只抓取这一个仓库，完成后更新 D1
  */
 export async function scrapeRepo(repo: Repo, env: Env): Promise<void> {
   console.log('[ScrapeRepo] Scraping single repo: ' + repo.fullName + ' (' + repo.platform + ')');
@@ -157,17 +151,8 @@ export async function scrapeRepo(repo: Repo, env: Env): Promise<void> {
 
     console.log('[ScrapeRepo] Found ' + releases.length + ' releases for ' + repo.fullName);
 
-    // 按日期分组写入
-    const byDate = groupByDate(releases);
-    const dates = Object.keys(byDate);
-    for (let i = 0; i < dates.length; i++) {
-      const date = dates[i];
-      await saveReleasesByDate(env.KV as any, date, byDate[date]);
-      await updateReleasesIndex(env.KV as any, date);
-    }
-
-    // 更新 releases:latest
-    await updateLatestReleases(env.KV as any, releases);
+    // 批量写入 D1
+    await upsertReleases(env.DB as any, releases);
 
     console.log('[ScrapeRepo] Completed for ' + repo.fullName);
   } catch (err) {

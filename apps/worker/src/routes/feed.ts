@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { getLatestReleases, getReleasesByDate, getRepos } from '../services/kv';
+import { getLatestReleases, getReleasesByDate, getRepos } from '../services/db';
 import type { Env } from '@srrm/shared';
 import type { Release } from '@srrm/shared';
 
@@ -60,7 +60,7 @@ function generateAtom(releases: Release[], baseUrl: string): string {
 feedRoute.get('/', async (c) => {
   try {
     const { repo } = c.req.query();
-    let releases: Release[] = (await getLatestReleases(c.env.KV as any)) as Release[];
+    let releases: Release[] = (await getLatestReleases(c.env.DB as any)) as Release[];
 
     if (repo) {
       releases = releases.filter((r: Release) =>
@@ -88,7 +88,7 @@ feedRoute.get('/', async (c) => {
 feedRoute.get('/date/:date', async (c) => {
   try {
     const { date } = c.req.param();
-    const releases: Release[] = (await getReleasesByDate(c.env.KV as any, date)) as Release[];
+    const releases: Release[] = (await getReleasesByDate(c.env.DB as any, date)) as Release[];
     const baseUrl = c.env.APP_BASE_URL || '';
 
     if (releases.length === 0) {

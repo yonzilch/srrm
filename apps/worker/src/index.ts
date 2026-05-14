@@ -5,6 +5,7 @@ import { releasesRoutes } from './routes/releases';
 import { adminRoutes } from './routes/admin';
 import { feedRoute } from './routes/feed';
 import { authMiddleware } from './middleware/auth';
+import { getConfig, getLastRun } from './services/db';
 import { validateEnv } from './env';
 import type { Env } from '@srrm/shared';
 
@@ -75,7 +76,7 @@ export async function scheduled(
     throw new Error(`Missing required env vars: ${missing.join(', ')}`);
   }
 
-  const lastRun = Number(await env.KV.get('config:scrape_last_run') ?? 0);
+  const lastRun = await getLastRun(env.DB);
   const interval = Number(env.SCRAPE_INTERVAL_MINUTES || '60') * 60 * 1000;
 
   if (Date.now() - lastRun < interval) {

@@ -3,7 +3,7 @@ import {
   getReleasesByDate,
   getLatestReleases,
   getReleasesIndex,
-} from '../services/kv';
+} from '../services/db';
 import type { Env } from '@srrm/shared';
 import type { Release } from '@srrm/shared';
 
@@ -20,10 +20,10 @@ releasesRoutes.get('/', async (c) => {
 
     if (date) {
       // 按日期查询
-      releases = (await getReleasesByDate(c.env.KV as any, date)) as Release[];
+      releases = (await getReleasesByDate(c.env.DB as any, date)) as Release[];
     } else {
       // 默认查询最近 releases
-      releases = (await getLatestReleases(c.env.KV as any)) as Release[];
+      releases = (await getLatestReleases(c.env.DB as any)) as Release[];
     }
 
     // 分页
@@ -51,7 +51,7 @@ releasesRoutes.get('/', async (c) => {
 releasesRoutes.get('/:id', async (c) => {
   const { id } = c.req.param();
   try {
-    const releases: Release[] = (await getLatestReleases(c.env.KV as any)) as Release[];
+    const releases: Release[] = (await getLatestReleases(c.env.DB as any)) as Release[];
     const releaseArr: Release[] = releases.filter((r: Release) => r.id === id);
     const release = releaseArr.length > 0 ? releaseArr[0] : null;
 
@@ -69,7 +69,7 @@ releasesRoutes.get('/:id', async (c) => {
 // GET /api/releases/index — 日期索引
 releasesRoutes.get('/index', async (c) => {
   try {
-    const dates = await getReleasesIndex(c.env.KV as any);
+    const dates = await getReleasesIndex(c.env.DB as any);
     return c.json({ dates });
   } catch (err) {
     console.error('[Releases Index Error]', err);

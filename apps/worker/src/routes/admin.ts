@@ -1,8 +1,7 @@
 import { Hono } from 'hono';
-import { getRepos, saveRepos, getLatestReleases, updateLatestReleases, deleteReleasesByRepo } from '../services/kv';
+import { getRepos, addRepo, deleteRepo, getLatestReleases, deleteReleasesForRepo } from '../services/db';
 import { detectPlatform, buildRepoUrl } from '../services/platform';
-import type { Env } from '@srrm/shared';
-import type { Repo } from '@srrm/shared';
+import type { Env, Repo, User } from '@srrm/shared';
 import { nanoid } from 'nanoid';
 
 export const adminRoutes = new Hono<{ Bindings: Env }>();
@@ -10,7 +9,7 @@ export const adminRoutes = new Hono<{ Bindings: Env }>();
 // GET /api/admin/repos — 获取所有仓库
 adminRoutes.get('/repos', async (c) => {
   try {
-    const repos: Repo[] = await getRepos(c.env.KV);
+    const repos: Repo[] = await getRepos(c.env.DB);
     return c.json({ repos });
   } catch (err) {
     console.error('[Admin Repos Get Error]', err);
@@ -40,7 +39,7 @@ adminRoutes.post('/repos', async (c) => {
       return c.json({ error: '无法识别仓库地址，请检查格式。支持：完整 URL 或 owner/repo' }, 400);
     }
 
-    const repos: Repo[] = await getRepos(c.env.KV);
+    const repos: Repo[] = await getRepos(c.env.DB);
 
     // 检查重复
     const duplicate = repos.find(
@@ -53,7 +52,7 @@ adminRoutes.post('/repos', async (c) => {
       return c.json({ error: '该仓库已在监控列表中' }, 409);
     }
 
-    const user = c.get('user') as { email: string } | undefined;
+    const user = c.get('jwtPayload') as User | undefined;
 
     const newRepo: Repo = {
       id: nanoid(),
@@ -67,8 +66,7 @@ adminRoutes.post('/repos', async (c) => {
       addedBy: user?.email ?? 'system',
     };
 
-    repos.push(newRepo);
-    await saveRepos(c.env.KV, repos);
+    await addRepo(c.env.DB, newRepo);
 
     // 异步触发单仓库抓取（不阻塞响应）
     try {
@@ -94,23 +92,16 @@ adminRoutes.post('/repos', async (c) => {
 adminRoutes.delete('/repos/:id', async (c) => {
   try {
     const { id } = c.req.param();
-    const repos: Repo[] = await getRepos(c.env.KV);
+    const repos: Repo[] = await getRepos(c.env.DB);
 
     const targetRepo = repos.find((r: Repo) => r.id === id);
     if (!targetRepo) {
       return c.json({ error: '仓库不存在' }, 404);
     }
 
-    const filtered = repos.filter((r: Repo) => r.id !== id);
-    await saveRepos(c.env.KV, filtered);
-
-    // 同步清理该仓库的所有 releases
-    try {
-      await deleteReleasesByRepo(c.env.KV, targetRepo.fullName);
-    } catch (delErr) {
-      console.error('[Admin Repos Delete] deleteReleasesByRepo failed:', delErr);
-      // 不阻塞删除响应，releases 数据可以后续清理
-    }
+    // 从 D1 中删除仓库及其所有 releases
+    await deleteRepo(c.env.DB, id);
+    await deleteReleasesForRepo(c.env.DB, targetRepo.fullName);
 
     return c.json({ success: true });
   } catch (err) {

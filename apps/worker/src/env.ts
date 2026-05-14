@@ -5,6 +5,6 @@ import type { Env } from '@srrm/shared';
 export function validateEnv(env: Env): string[] {
   const missing: string[] = [];
   if (!env.JWT_SECRET) missing.push('JWT_SECRET');
-  if (!env.KV) missing.push('KV');
+  if (!env.DB) missing.push('DB');
   return missing;
 }

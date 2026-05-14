@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Release } from '@srrm/shared';
+import type { Release } from '@srrm/shared';
 
 interface ReleaseTimelineProps {
   releases: Release[];

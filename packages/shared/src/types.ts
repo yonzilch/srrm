@@ -1,34 +1,97 @@
+// packages/shared/src/types.ts
+// 共享 TypeScript 类型定义 — Worker 和 Web 端复用
+// 不引用任何平台特定的 API（如 @cloudflare/workers-types）
+
+/**
+ * 支持的平台标识
+ */
 export type Platform = 'github' | 'gitlab' | 'forgejo' | 'gitea';
 
+/**
+ * Cloudflare KV 命名空间
+ * 在 Worker 端由绑定注入，Web 端不使用
+ */
+export type KVNamespace = unknown;
+
+/**
+ * D1 数据库实例
+ * 在 Worker 端由绑定注入，Web 端不使用
+ */
+export type D1Database = unknown;
+
+/**
+ * Hono 扩展上下文 — 在标准 Env 基础上添加 Workers Assets 绑定
+ */
+export interface HonoEnv {
+  ASSETS?: { fetch(request: Request): Promise<Response> };
+}
+
+/**
+ * 应用环境变量（Hono Bindings）
+ * 所有字段均为运行时注入，不硬编码
+ */
+export type Env = {
+  KV: KVNamespace;
+  DB: D1Database;
+  GITHUB_TOKEN?: string;
+  SSO_PROVIDER?: string;
+  SSO_ISSUER_URL?: string;
+  SSO_CLIENT_ID?: string;
+  SSO_CLIENT_SECRET?: string;
+  SSO_CALLBACK_URL?: string;
+  ADMIN_EMAILS?: string;
+  JWT_SECRET: string;
+  SCRAPE_INTERVAL_MINUTES?: string;
+  APP_BASE_URL?: string;
+  RSS_PUBLIC?: string;
+} & HonoEnv;
+
+/**
+ * 监控的 Git 仓库
+ */
 export interface Repo {
-  id: string;
-  platform: Platform;
-  baseUrl: string;
+  id: string;           // nanoid 生成
+  platform: string;     // 'github' | 'gitlab' | 'forgejo' | 'gitea'
+  baseUrl: string;      // 如 https://github.com
   owner: string;
   repo: string;
-  fullName: string;
-  repoUrl: string;
-  addedAt: string;
-  addedBy: string;
+  fullName: string;     // "{owner}/{repo}"
+  repoUrl: string;      // 仓库访问 URL
+  addedAt: string;      // ISO 8601
+  addedBy: string;      // 添加者邮箱
 }
 
+/**
+ * Git Release 条目
+ */
 export interface Release {
-  id: string;
-  repoFullName: string;
-  repoUrl: string;
-  platform: Platform;
+  id: string;                   // GitHub release node_id
+  repoFullName: string;         // "{owner}/{repo}"
   tagName: string;
   name: string;
-  body: string;
-  bodyHtml: string;
-  publishedAt: string;
+  body: string;                 // Markdown 格式的 Release Notes
+  bodyHtml?: string;            // 已渲染的 HTML（可选）
+  publishedAt: string;          // ISO 8601
   htmlUrl: string;
+  repoUrl?: string;             // 仓库页面 URL（可选）
   isPrerelease: boolean;
   isDraft: boolean;
+  platform?: string;            // 平台标识（可选，默认 github）
 }
 
+/**
+ * 认证用户信息（JWT payload）
+ */
 export interface User {
   email: string;
   role: 'admin' | 'viewer';
-  exp: number;
+  exp: number;                  // Unix 时间戳（秒）
+}
+
+/**
+ * API 错误响应
+ */
+export interface ApiError {
+  error: string;
+  code?: string;
 }

@@ -1,15 +1,15 @@
 export interface Env {
-  // Cloudflare Workers Runtime Bindings
-  KV?: any;
+  // Cloudflare D1 Database
+  DB?: any;
 
   // Auth - JWT Secret
   JWT_SECRET: string;
 
   // Platform Tokens（均为可选，公开仓库不需要）
-  GITHUB_TOKEN?: string;   // GitHub 仓库（建议填写防限流）
-  GITLAB_TOKEN?: string;   // GitLab 实例 token
-  FORGEJO_TOKEN?: string;  // Forgejo/Codeberg token
-  GITEA_TOKEN?: string;    // 通用 Gitea token
+  GITHUB_TOKEN?: string;
+  GITLAB_TOKEN?: string;
+  FORGEJO_TOKEN?: string;
+  GITEA_TOKEN?: string;
 
   // SSO / OIDC Configuration
   SSO_ISSUER_URL?: string;

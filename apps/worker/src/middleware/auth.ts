@@ -25,7 +25,7 @@ export const authMiddleware = async (c: any, next: () => Promise<void>) => {
     if (!payload) {
       return c.json({ error: 'Unauthorized' }, 401);
     }
-    c.set('user', payload);
+    c.set('jwtPayload', payload);
     await next();
   } catch (err) {
     console.error('[Auth Middleware Error]', err);
