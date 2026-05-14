@@ -67,6 +67,41 @@ a:hover {
   text-decoration: underline;
 }
 
+/* ===== prose 样式 — Release Notes HTML 渲染 ===== */
+.release-notes.prose {
+  --tw-prose-body: #cdd6f4;
+  --tw-prose-headings: #cdd6f4;
+  --tw-prose-links: #89b4fa;
+  --tw-prose-bold: #cdd6f4;
+  --tw-prose-code: #fab387;
+  --tw-prose-quotes: #a6adc8;
+  --tw-prose-quote-borders: #585b70;
+  --tw-prose-hr: #45475a;
+}
+
+.release-notes.prose a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.release-notes.prose a[href^="http"]::after {
+  content: ' ↗';
+  font-size: 0.75em;
+  opacity: 0.6;
+}
+
+.release-notes.prose pre {
+  background-color: #181825;
+  border: 1px solid #45475a;
+}
+
+.release-notes.prose code:not(pre code) {
+  background-color: #45475a;
+  padding: 0.1em 0.3em;
+  border-radius: 0.25em;
+  font-size: 0.875em;
+}
+
 /* ===== Selection ===== */
 ::selection {
   background-color: var(--ctp-blue);

@@ -47,6 +47,14 @@ export const api = {
     scrape: {
       trigger: () => request<void>('/api/admin/scrape/trigger', { method: 'POST' }),
     },
+    notify: {
+      status: () => request<{ name: string; configured: boolean }[]>('/api/admin/notify/status'),
+      test: () =>
+        request<{ ok: boolean; results: Array<{ notifier: string; success: boolean; error?: string }> }>(
+          '/api/admin/notify/test',
+          { method: 'POST' }
+        ),
+    },
   },
   auth: {
     login: () => request<{ url: string }>('/api/auth/login', { method: 'GET' }),

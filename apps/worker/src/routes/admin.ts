@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { getRepos, addRepo, deleteRepo, getLatestReleases, deleteReleasesForRepo } from '../services/db';
 import { detectPlatform, buildRepoUrl } from '../services/platform';
-import type { Env, Repo, User } from '@srrm/shared';
+import type { Env, Repo, User, Release } from '@srrm/shared';
 import { nanoid } from 'nanoid';
 
 export const adminRoutes = new Hono<{ Bindings: Env }>();
@@ -134,4 +134,50 @@ adminRoutes.post('/scrape/trigger', async (c) => {
     console.error('[Admin Scrape Trigger Error]', err);
     return c.json({ error: '触发抓取失败' }, 500);
   }
+});
+
+// POST /api/admin/notify/test — 测试通知配置
+adminRoutes.post('/notify/test', async (c) => {
+  const { buildNotifiers, dispatchNotifications } = await import('../services/notifiers/index');
+  const notifiers = buildNotifiers(c.env);
+
+  if (notifiers.length === 0) {
+    return c.json({
+      ok: false,
+      message: '未配置任何通知方式（GOTIFY_URL / APPRISE_API_URL / WEBHOOK_URL 均未设置）',
+    }, 400);
+  }
+
+  const mockRelease: Release = {
+    id: 'test-notification',
+    repoFullName: 'srrm/test',
+    repoUrl: 'https://github.com/srrm/test',
+    platform: 'github',
+    tagName: 'v0.0.0-test',
+    name: 'SRRM 通知测试',
+    body: '这是一条来自 SRRM 的测试通知，用于验证通知配置是否正常工作。',
+    publishedAt: new Date().toISOString(),
+    htmlUrl: 'https://github.com',
+    isPrerelease: false,
+    isDraft: false,
+  };
+
+  const results = await dispatchNotifications([mockRelease], c.env);
+  const allOk = results.every(r => r.success);
+
+  return c.json({ ok: allOk, results }, allOk ? 200 : 207);
+});
+
+// GET /api/admin/notify/status — 获取通知器配置状态
+adminRoutes.get('/notify/status', async (c) => {
+  const { GotifyNotifier, AppriseNotifier, WebhookNotifier } = await import('../services/notifiers/index');
+  const all = [
+    new GotifyNotifier(),
+    new AppriseNotifier(),
+    new WebhookNotifier(),
+  ];
+  return c.json(all.map(n => ({
+    name: n.name,
+    configured: n.isConfigured(c.env),
+  })));
 });

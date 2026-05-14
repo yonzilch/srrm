@@ -57,20 +57,48 @@ export async function getRepoByFullNameAndBase(
 // ── Releases ─────────────────────────────────────────────
 
 /**
- * 批量 upsert releases
+ * 批量 upsert releases，并返回真正新增的条目
  * D1 batch 每次最多 100 条 statement
  * PRIMARY KEY (repo_full_name, tag_name) 天然去重
  */
 export async function upsertReleases(
   db: D1Database,
   releases: Release[]
-): Promise<{ inserted: number; updated: number }> {
+): Promise<{ inserted: number; updated: number; newReleases: Release[] }> {
   if (releases.length === 0) {
-    return { inserted: 0, updated: 0 };
+    return { inserted: 0, updated: 0, newReleases: [] };
   }
 
-  let inserted = 0;
+  // 1. 查询已存在的 (repo_full_name, tag_name) 组合
+  const placeholders = releases.map((_, i) => `(?${2 * i + 1}, ?${2 * i + 2})`).join(', ');
+  const existParams: (string | string)[] = [];
+  for (const r of releases) {
+    existParams.push(r.repoFullName, r.tagName);
+  }
 
+  const existRows = await db
+    .prepare(`SELECT repo_full_name, tag_name FROM releases WHERE (repo_full_name, tag_name) IN (VALUES ${placeholders})`)
+    .bind(...existParams)
+    .all();
+
+  const existingSet = new Set(
+    (existRows.results as any[]).map((row: any) => `${row.repo_full_name}|${row.tag_name}`)
+  );
+
+  // 2. 区分新增 vs 更新
+  const newReleases: Release[] = [];
+  const updateReleases: Release[] = [];
+
+  for (const r of releases) {
+    const key = `${r.repoFullName}|${r.tagName}`;
+    if (existingSet.has(key)) {
+      updateReleases.push(r);
+    } else {
+      newReleases.push(r);
+    }
+  }
+
+  // 3. 分批执行 INSERT OR REPLACE（每批最多 100 条）
   for (let i = 0; i < releases.length; i += 100) {
     const batch = releases.slice(i, i + 100);
     const statements = batch.map((r) =>
@@ -86,13 +114,10 @@ export async function upsertReleases(
         )
     );
 
-    const results = await db.batch(statements);
-    for (const r of results as any[]) {
-      if (r.success) inserted++;
-    }
+    await db.batch(statements);
   }
 
-  return { inserted, updated: 0 };
+  return { inserted: newReleases.length, updated: updateReleases.length, newReleases };
 }
 
 /**
