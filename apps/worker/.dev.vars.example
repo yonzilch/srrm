@@ -1,0 +1,37 @@
+# .dev.vars.example — Cloudflare Workers 本地开发环境变量模板
+# 复制为 .dev.vars 并填入实际值，仅用于本地 wrangler dev
+# 注意：DB 绑定由 wrangler.toml 中的 [[d1_databases]] 自动注入，无需在此配置
+
+# ── 必填 ──────────────────────────────────────────────
+GITHUB_TOKEN=ghp_your_github_personal_access_token
+JWT_SECRET=your_32_byte_random_secret_here
+ADMIN_EMAILS=admin@example.com
+SSO_CALLBACK_URL=http://localhost:8787/api/auth/callback
+
+# ── SSO / OIDC（可选，如使用 GitHub OAuth 可留空） ────
+SSO_PROVIDER=
+SSO_ISSUER_URL=
+SSO_CLIENT_ID=
+SSO_CLIENT_SECRET=
+
+# ── 应用配置 ──────────────────────────────────────────
+APP_BASE_URL=http://localhost:8787
+RSS_PUBLIC=true
+SCRAPE_INTERVAL_MINUTES=60
+
+# ── 通知配置（全部留空则不启用通知器） ────────────────
+# Gotify
+GOTIFY_URL=
+GOTIFY_TOKEN=
+GOTIFY_PRIORITY=5
+# Apprise HTTP API
+APPRISE_API_URL=
+APPRISE_URLS=
+APPRISE_TAG=
+# 通用 Webhook
+WEBHOOK_URL=
+WEBHOOK_SECRET=
+WEBHOOK_METHOD=POST
+
+# ── 自定义站点图标（可选） ───────────────────────────
+FAVICON_URL=
