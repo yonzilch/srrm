@@ -3,7 +3,7 @@
 > Track releases across multiple Git repositories in one place.  
 > Delivers a unified RSS feed and a clean web UI — powered entirely by Cloudflare Workers, Pages, and D1. No server to manage.
 
-[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE)
+[![LICENSE](https://img.shields.io/badge/License-MIT-Green.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-brightgreen)](https://nodejs.org)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-orange)](https://workers.cloudflare.com)
 

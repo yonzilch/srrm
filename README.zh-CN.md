@@ -3,7 +3,7 @@
 > 在一个地方追踪多个 Git 仓库的发布动态。  
 > 提供统一的 RSS 订阅源和简洁的 Web UI — 完全由 Cloudflare Workers、Pages 和 D1 驱动，无需管理服务器。
 
-[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE)
+[![LICENSE](https://img.shields.io/badge/License-MIT-Green.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-brightgreen)](https://nodejs.org)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-orange)](https://workers.cloudflare.com)
 
