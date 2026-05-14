@@ -1,14 +1,16 @@
 # SRRM — Serverless Repository Release Monitor
 
-> 聚合多个 Git 仓库的 Release 动态，提供统一 RSS + Web 浏览界面。
-> 运行在 Cloudflare Workers (Edge) + Cloudflare Pages (SPA) 上，无需传统服务器。
+> Aggregate release feeds from multiple Git repositories into a unified RSS + web interface.
+> Runs on Cloudflare Workers (Edge) + Cloudflare Pages (SPA) — no traditional server required.
 
-## 架构概览
+[中文文档](README.zh-CN.md)
+
+## Architecture
 
 ```
 ┌─────────────┐     ┌──────────────┐     ┌─────────────┐
 │  Cloudflare  │     │  Cloudflare  │     │  Cloudflare  │
-│   Pages      │────▶│   Workers    │────▶│     KV      │
+│   Pages      │────▶│   Workers    │────▶│   D1 / KV   │
 │  (SPA)       │     │  (API+Cron)  │     │  (Storage)  │
 └─────────────┘     └──────────────┘     └─────────────┘
                             │
@@ -16,104 +18,198 @@
                     GitHub Releases API
 ```
 
-## 技术栈
+## Tech Stack
 
-| 模块 | 技术 |
-|------|------|
+| Module | Technology |
+|--------|-----------|
 | **Worker API** | Hono + Cloudflare Workers |
-| **前端 SPA** | React 18 + Vite + Tailwind CSS |
-| **路由** | React Router v6 |
-| **状态管理** | TanStack React Query |
-| **认证** | OAuth2 (SSO) + JWT (HttpOnly Cookie) |
-| **数据抓取** | Cloudflare Cron Triggers |
-| **通知** | RSS 2.0 / Atom Feed |
+| **Frontend SPA** | React 18 + Vite + Tailwind CSS |
+| **Routing** | React Router v6 |
+| **State Management** | TanStack React Query + Zustand |
+| **Auth** | OAuth2 (SSO) + JWT (HttpOnly Cookie) |
+| **Data Fetching** | Cloudflare Cron Triggers |
+| **Notifications** | RSS 2.0 / Gotify / Apprise / Webhook |
+| **Storage** | Cloudflare D1 (SQLite) |
 
-## 快速开始
+## Quick Start
 
-### 前置条件
+### Prerequisites
 
 - Node.js 18+
 - pnpm 8+
-- Cloudflare 账号（Workers + KV + Pages）
+- Cloudflare account (Workers + D1 + Pages)
 
-### 安装
+### Installation
 
 ```bash
-# 安装依赖
 pnpm install
-
-# 复制环境变量模板
-cp .env.example .env
-
-# 编辑 .env 填入必要配置
 ```
 
-### 本地开发
+### Local Development
 
 ```bash
-# 启动 Worker (wrangler dev)
+# Start Worker (wrangler dev)
 pnpm --filter @srrm/worker dev
 
-# 启动 Web 开发服务器 (Vite)
+# Start Web dev server (Vite)
 pnpm --filter @srrm/web dev
 ```
 
-### 类型检查
+### Type Checking
 
 ```bash
-# 检查所有包
+# Check all packages
 pnpm -r exec tsc --noEmit
-
-# 或单独检查
-pnpm --filter @srrm/shared build
-pnpm --filter @srrm/web exec tsc --noEmit
-pnpm --filter @srrm/worker exec tsc --noEmit
 ```
 
-## 环境变量
+## Environment Variables
 
-| 变量 | 说明 | 必填 |
-|------|------|------|
-| `GITHUB_TOKEN` | GitHub PAT，防止 API 限流 | 是 |
-| `JWT_SECRET` | JWT 签名密钥（至少 32 字节随机串） | 是 |
-| `KV` | Cloudflare KV 命名空间 ID | 是 |
-| `SSO_ISSUER_URL` | OIDC Provider 发行地址 | 是 |
-| `SSO_CLIENT_ID` | OIDC Client ID | 是 |
-| `SSO_CLIENT_SECRET` | OIDC Client Secret | 是 |
-| `SSO_CALLBACK_URL` | 回调地址 `https://xxx/workers.dev/api/auth/callback` | 是 |
-| `ADMIN_EMAILS` | 管理员邮箱（逗号分隔） | 是 |
-| `APP_BASE_URL` | 前端根地址（如 `https://xxx.pages.dev`） | 是 |
-| `SCRAPE_INTERVAL_MINUTES` | 抓取间隔（默认 60） | 否 |
-| `RSS_PUBLIC` | RSS 是否公开（默认 true） | 否 |
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `GITHUB_TOKEN` | GitHub PAT to avoid rate limiting | Yes |
+| `JWT_SECRET` | JWT signing key (min 32 bytes random) | Yes |
+| `SSO_ISSUER_URL` | OIDC Provider issuer URL | Yes |
+| `SSO_CLIENT_ID` | OIDC Client ID | Yes |
+| `SSO_CLIENT_SECRET` | OIDC Client Secret | Yes |
+| `SSO_CALLBACK_URL` | Callback URL | Yes |
+| `ADMIN_EMAILS` | Admin emails (comma-separated) | Yes |
+| `APP_BASE_URL` | Frontend base URL | Yes |
+| `SCRAPE_INTERVAL_MINUTES` | Scrape interval in minutes (default 60) | No |
+| `RSS_PUBLIC` | Whether RSS is public (default true) | No |
+| `GOTIFY_URL` | Gotify server URL | No |
+| `GOTIFY_TOKEN` | Gotify app token | No |
+| `GOTIFY_PRIORITY` | Message priority (default 5) | No |
+| `APPRISE_API_URL` | Apprise HTTP API URL | No |
+| `APPRISE_URLS` | Apprise notification targets (comma-separated) | No |
+| `APPRISE_TAG` | Apprise notification tag | No |
+| `WEBHOOK_URL` | Webhook target URL | No |
+| `WEBHOOK_SECRET` | HMAC-SHA256 signing secret | No |
+| `WEBHOOK_METHOD` | HTTP method (default POST) | No |
 
-## 路由
+## API Routes
 
 ### Worker API
 
 ```
-GET  /api/releases              → 所有 releases（分页/日期过滤）
+GET  /api/releases              → All releases (paginated / date-filtered)
 GET  /feed.xml                  → RSS/Atom Feed
-GET  /api/auth/login            → 重定向到 SSO
-GET  /api/auth/callback         → SSO 回调
-POST /api/auth/logout           → 登出
-GET  /api/auth/me               → 检查认证状态
-GET  /api/admin/repos           → 获取仓库列表（需认证）
-POST /api/admin/repos           → 添加仓库（需认证）
-DELETE /api/admin/repos/:id     → 删除仓库（需认证）
-GET  /api/admin/config          → 获取配置（需认证）
-POST /api/admin/scrape/trigger  → 手动触发抓取（需认证）
+GET  /api/auth/login            → Redirect to SSO
+GET  /api/auth/callback         → SSO callback
+POST /api/auth/logout           → Logout
+GET  /api/auth/me               → Check auth status
+GET  /api/admin/repos           → List tracked repos (auth required)
+POST /api/admin/repos           → Add a repo (auth required)
+DELETE /api/admin/repos/:id     → Remove a repo (auth required)
+GET  /api/admin/config          → Get config (auth required)
+POST /api/admin/scrape/trigger  → Trigger scrape manually (auth required)
+GET  /api/admin/notify/status   → List notifier configuration status (auth required)
+POST /api/admin/notify/test     → Send test notification (auth required)
 ```
 
 ### Web SPA
 
 ```
-/          → 首页（Release 时间线）
-/feed      → RSS 订阅引导页
-/login     → 登录页
-/admin     → 仓库管理
-/admin/settings → 配置查看
+/                  → Home (Release timeline)
+/feed              → RSS subscription guide
+/login             → Login page
+/admin             → Repo management
+/admin/settings    → Config & notification settings
 ```
 
-## 许可证
+## Notification System
+
+SRRM supports multiple notification channels. Each notifier is auto-detected based on environment variables:
+
+| Notifier | Env Vars | Description |
+|----------|----------|-------------|
+| **Gotify** | `GOTIFY_URL`, `GOTIFY_TOKEN` | Push notifications via Gotify server |
+| **Apprise** | `APPRISE_API_URL` | Multi-channel via Apprise HTTP API |
+| **Webhook** | `WEBHOOK_URL` | Generic HTTP webhook with optional HMAC-SHA256 signing |
+
+Notifiers are triggered automatically when new releases are detected during a scrape cycle. Each notifier runs independently — one failure does not block others.
+
+### Notifier Interface
+
+All notifiers implement the following contract:
+
+```typescript
+interface Notifier {
+  readonly name: string;
+  isConfigured(env: Env): boolean;
+  send(release: Release, env: Env): Promise<void>;
+}
+```
+
+### Adding a Custom Notifier
+
+1. Create a new file in `apps/worker/src/services/notifiers/`
+2. Implement the `Notifier` interface
+3. Register it in `apps/worker/src/services/notifiers/index.ts`
+
+## Project Structure
+
+```
+srrm/
+├── apps/
+│   ├── worker/                    # Cloudflare Workers (Hono)
+│   │   ├── src/
+│   │   │   ├── index.ts           # App entry + route registration
+│   │   │   ├── scheduled.ts       # Cron handler
+│   │   │   ├── middleware/
+│   │   │   │   └── auth.ts        # Auth middleware
+│   │   │   ├── routes/
+│   │   │   │   ├── auth.ts        # /api/auth/*
+│   │   │   │   ├── releases.ts    # /api/releases
+│   │   │   │   ├── admin.ts       # /api/admin/*
+│   │   │   │   └── feed.ts        # /feed.xml
+│   │   │   └── services/
+│   │   │       ├── db.ts          # D1 database operations
+│   │   │       ├── github.ts      # GitHub API client
+│   │   │       ├── scraper.ts     # Scrape logic
+│   │   │       ├── platform.ts    # Multi-platform support
+│   │   │       └── notifiers/     # Notification dispatchers
+│   │   │           ├── base.ts
+│   │   │           ├── gotify.ts
+│   │   │           ├── apprise.ts
+│   │   │           ├── webhook.ts
+│   │   │           └── index.ts
+│   │   └── wrangler.toml
+│   │
+│   └── web/                       # Cloudflare Pages (React/Vite)
+│       ├── src/
+│       │   ├── main.tsx
+│       │   ├── router.tsx
+│       │   ├── pages/
+│       │   │   ├── Home.tsx
+│       │   │   ├── Login.tsx
+│       │   │   ├── Feed.tsx
+│       │   │   └── admin/
+│       │   │       ├── Repos.tsx
+│       │   │       └── Settings.tsx
+│       │   ├── components/
+│       │   │   ├── ReleaseTimeline.tsx
+│       │   │   ├── RepoFilterBar.tsx
+│       │   │   └── AddRepoForm.tsx
+│       │   ├── hooks/
+│       │   │   ├── useAuth.ts
+│       │   │   └── useReleases.ts
+│       │   └── api/
+│       │       └── client.ts
+│       └── vite.config.ts
+│
+├── packages/
+│   └── shared/                    # Shared types (worker + web)
+│       └── src/
+│           ├── types.ts
+│           ├── env.ts
+│           └── markdown.ts
+│
+├── ROADMAP.md
+├── AGENTS.md
+├── README.md
+└── README.zh-CN.md
+```
+
+## License
 
 ISC
