@@ -99,7 +99,7 @@ wrangler d1 create srrm-db
 Run migrations:
 
 ```bash
-wrangler d1 execute srrm-db --file=apps/worker/migrations/0001_init.sql
+wrangler d1 execute srrm-db --file=apps/worker/src/db/schema.sql
 ```
 
 ### 2. Set secrets

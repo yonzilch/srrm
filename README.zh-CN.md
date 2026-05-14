@@ -114,7 +114,7 @@ wrangler d1 create srrm-db
 运行迁移：
 
 ```bash
-wrangler d1 execute srrm-db --file=apps/worker/migrations/0001_init.sql
+wrangler d1 execute srrm-db --file=apps/worker/src/db/schema.sql
 ```
 
 ### 2. 设置密钥
