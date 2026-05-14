@@ -120,14 +120,14 @@ function ReleaseCard({ release, isOpen, onToggle }: {
         </a>
 
         {/* pre-release badge */}
-        {release.isPrerelease && (
+        {!!release.isPrerelease ? (
           <span className="inline-flex items-center shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium bg-ctp-orange/15 text-ctp-orange border border-ctp-orange/25">
             Pre-release
           </span>
-        )}
+        ) : null}
 
-        {/* Release 名称 */}
-        {release.name && (
+        {/* Release 名称 — 与 tagName 相同时不重复显示 */}
+        {release.name && release.name !== release.tagName && (
           <span className="text-ctp-overlay0 text-sm truncate flex-1">
             {release.name}
           </span>
@@ -183,16 +183,7 @@ function ReleaseCard({ release, isOpen, onToggle }: {
             </div>
           </div>
 
-          {/* View Full 按钮 */}
-          <a
-            href={release.htmlUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 bg-ctp-surface1 text-ctp-subtext2 text-xs rounded-lg border border-ctp-surface2 hover:bg-ctp-surface2 hover:text-ctp-text transition-colors"
-          >
-            View Full ↗
-          </a>
+          {/* View Full 已由 Read full notes 替代，移除 */}
         </div>
       </div>
     </div>
@@ -293,9 +284,6 @@ export default function ReleaseTimeline({
               <div className="w-px h-5 bg-ctp-blue/40 rounded-full shrink-0" />
               <span className="text-sm font-medium text-ctp-text">
                 {formatDateFriendly(date)}
-              </span>
-              <span className="text-[11px] text-ctp-overlay0">
-                {grouped[date].length} release{grouped[date].length !== 1 ? 's' : ''}
               </span>
             </div>
 
