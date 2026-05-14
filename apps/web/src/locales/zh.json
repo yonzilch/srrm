@@ -47,7 +47,7 @@
   "repos.confirmRemove": "确认",
   "repos.cancelRemove": "取消",
   "login.title": "SRRM",
-  "login.subtitle": "登录以管理你的仓库发布",
+  "login.subtitle": "登录以管理你订阅的仓库版本发布",
   "login.signInWithSSO": "SSO 登录",
   "login.signingIn": "登录中...",
   "feed.notes": "发布说明",

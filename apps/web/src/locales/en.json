@@ -47,7 +47,7 @@
   "repos.confirmRemove": "Yes",
   "repos.cancelRemove": "Cancel",
   "login.title": "SRRM",
-  "login.subtitle": "Sign in to manage your repository releases",
+  "login.subtitle": "Sign in to manage your subscribed repository releases",
   "login.signInWithSSO": "Sign in with SSO",
   "login.signingIn": "Signing in...",
   "feed.notes": "Release Notes",
