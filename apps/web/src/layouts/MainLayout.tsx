@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useI18n } from '../contexts/I18nContext';
 
 function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
   const location = useLocation();
@@ -21,7 +22,9 @@ function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
 
 export default function Layout() {
   const { user, loading, logout } = useAuth();
+  const { locale, setLocale, t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -32,6 +35,11 @@ export default function Layout() {
   const initials = user?.email
     ? user.email.charAt(0).toUpperCase()
     : '?';
+
+  const toggleLocale = () => {
+    setLocale(locale === 'en' ? 'zh' : 'en');
+    setLangMenuOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-ctp-base text-ctp-text">
@@ -44,18 +52,73 @@ export default function Layout() {
                 SRRM
               </Link>
               <div className="hidden sm:flex sm:items-center sm:gap-1">
-                <NavLink to="/">Releases</NavLink>
+                <NavLink to="/">{t('nav.releases')}</NavLink>
                 {user?.role === 'admin' && (
                   <>
-                    <NavLink to="/admin">Repos</NavLink>
-                    <NavLink to="/admin/settings">Settings</NavLink>
+                    <NavLink to="/admin">{t('nav.repos')}</NavLink>
+                    <NavLink to="/admin/settings">{t('nav.settings')}</NavLink>
                   </>
                 )}
               </div>
             </div>
 
             {/* 右侧用户区域 */}
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
+              {/* 语言切换按钮 — 放在头像左侧 */}
+              <div className="relative">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLangMenuOpen(!langMenuOpen);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm text-ctp-subtext1 hover:text-ctp-text hover:bg-white/5 transition-colors border border-transparent hover:border-white/10"
+                >
+                  <span className="text-xs font-medium">
+                    {locale === 'en' ? '🇬🇧' : '🇨🇳'}
+                  </span>
+                  <span className="hidden sm:inline">
+                    {locale === 'en' ? 'EN' : '中文'}
+                  </span>
+                  <svg
+                    className={`h-3 w-3 text-ctp-overlay0 transition-transform duration-200 ${langMenuOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+                {langMenuOpen && (
+                  <div className="absolute right-0 mt-1 w-32 rounded-xl border border-ctp-surface1 bg-ctp-mantle shadow-lg py-1 z-30">
+                    <button
+                      onClick={() => setLocale('en')}
+                      className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                        locale === 'en'
+                          ? 'text-ctp-blue bg-ctp-blue/10'
+                          : 'text-ctp-subtext1 hover:bg-white/5'
+                      }`}
+                    >
+                      🇬🇧 English
+                    </button>
+                    <button
+                      onClick={() => setLocale('zh')}
+                      className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                        locale === 'zh'
+                          ? 'text-ctp-blue bg-ctp-blue/10'
+                          : 'text-ctp-subtext1 hover:bg-white/5'
+                      }`}
+                    >
+                      🇨🇳 中文
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {!loading && user ? (
                 <div className="relative">
                   <button
@@ -89,7 +152,7 @@ export default function Layout() {
                         onClick={handleLogout}
                         className="block w-full text-left px-4 py-2 text-sm text-ctp-subtext1 hover:bg-white/5 transition-colors"
                       >
-                        Sign out
+                        {t('nav.signOut')}
                       </button>
                     </div>
                   )}
@@ -100,7 +163,7 @@ export default function Layout() {
                     to="/login"
                     className="text-sm text-ctp-subtext1 hover:text-ctp-text transition-colors"
                   >
-                    Sign in
+                    {t('nav.signIn')}
                   </Link>
                 )
               )}

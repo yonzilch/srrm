@@ -44,6 +44,23 @@ export type Env = {
   SCRAPE_INTERVAL_MINUTES?: string;
   APP_BASE_URL?: string;
   RSS_PUBLIC?: string;
+
+  // ── 通知配置 ────────────────────────────────────
+  // Gotify
+  GOTIFY_URL?: string;
+  GOTIFY_TOKEN?: string;
+  GOTIFY_PRIORITY?: string;
+  // Apprise HTTP API
+  APPRISE_API_URL?: string;
+  APPRISE_URLS?: string;
+  APPRISE_TAG?: string;
+  // 通用 Webhook
+  WEBHOOK_URL?: string;
+  WEBHOOK_SECRET?: string;
+  WEBHOOK_METHOD?: string;
+
+  // Favicon URL (可选，自定义站点图标)
+  FAVICON_URL?: string;
 } & HonoEnv;
 
 /**

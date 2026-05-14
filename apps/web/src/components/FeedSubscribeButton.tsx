@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useI18n } from '../contexts/I18nContext';
 
 // RSS SVG 图标
 function RssIcon({ className }: { className?: string }) {
@@ -20,6 +21,7 @@ function RssIcon({ className }: { className?: string }) {
 }
 
 export default function FeedSubscribeButton() {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -47,7 +49,7 @@ export default function FeedSubscribeButton() {
         rel="noopener noreferrer"
         className="text-sm text-ctp-overlay0 hover:text-ctp-blue transition-colors"
       >
-        Preview ↗
+        {t('feed.previewFeed')}
       </a>
     </div>
   );

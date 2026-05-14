@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
 import { detectPlatform } from '../utils/platform';
+import { useI18n } from '../contexts/I18nContext';
 
 interface PlatformResult {
   platform: string;
@@ -52,6 +53,7 @@ interface AddRepoFormProps {
 }
 
 export default function AddRepoForm({ onSuccess }: AddRepoFormProps) {
+  const { t } = useI18n();
   const queryClient = useQueryClient();
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -62,13 +64,13 @@ export default function AddRepoForm({ onSuccess }: AddRepoFormProps) {
   const detected = url.trim() ? detectPlatform(url.trim()) : null;
 
   const validate = useCallback((input: string): string | null => {
-    if (!input.trim()) return '请输入仓库地址';
+    if (!input.trim()) return t('common.error');
     if (input.trim().indexOf('://') !== -1) {
-      try { new URL(input.trim()); } catch { return 'URL 格式不正确'; }
+      try { new URL(input.trim()); } catch { return t('common.error'); }
     }
-    if (!detectPlatform(input.trim())) return '无法识别仓库地址，请使用完整 URL 或 owner/repo 格式';
+    if (!detectPlatform(input.trim())) return t('common.error');
     return null;
-  }, []);
+  }, [t]);
 
   const handleAdd = async () => {
     setError(null);
@@ -88,7 +90,7 @@ export default function AddRepoForm({ onSuccess }: AddRepoFormProps) {
       setTimeout(() => setSuccess(null), 5000);
       inputRef.current?.focus();
     } catch (err: any) {
-      setError(err.message || '添加仓库失败');
+      setError(err.message || t('common.error'));
     } finally {
       setLoading(false);
     }
@@ -103,9 +105,9 @@ export default function AddRepoForm({ onSuccess }: AddRepoFormProps) {
 
   return (
     <div className="bg-ctp-surface0/60 rounded-xl border border-ctp-surface1 p-6 space-y-5">
-      <h2 className="text-lg font-semibold text-ctp-text">Add Repository</h2>
+      <h2 className="text-lg font-semibold text-ctp-text">{t('repos.add')}</h2>
       <p className="text-sm text-ctp-subtext1">
-        支持 GitHub / GitLab / Forgejo / Gitea（含 Codeberg 等自托管实例）
+        {t('common.supportedPlatforms')}
       </p>
 
       {error && (
@@ -120,7 +122,7 @@ export default function AddRepoForm({ onSuccess }: AddRepoFormProps) {
       )}
 
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-ctp-subtext1">仓库地址</label>
+        <label className="block text-sm font-medium text-ctp-subtext1">{t('repos.fullName')}</label>
         <div className="flex items-center gap-2">
           <input
             ref={inputRef}
@@ -153,7 +155,7 @@ export default function AddRepoForm({ onSuccess }: AddRepoFormProps) {
           disabled={loading || !url.trim()}
           className="inline-flex items-center gap-2 px-4 py-2 bg-ctp-blue text-ctp-base font-medium rounded-lg hover:bg-ctp-blue/90 transition-colors disabled:opacity-50 text-sm"
         >
-          {loading ? '添加中...' : 'Add Repository'}
+          {loading ? t('common.loading') : t('common.add')}
         </button>
         {url.trim() && (
           <button

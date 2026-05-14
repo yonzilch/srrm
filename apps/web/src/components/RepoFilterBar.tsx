@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../contexts/I18nContext';
 
 interface RepoFilterBarProps {
   options: { label: string; value: string }[];
@@ -7,11 +8,13 @@ interface RepoFilterBarProps {
 }
 
 export default function RepoFilterBar({ options, value, onChange }: RepoFilterBarProps) {
+  const { t } = useI18n();
+
   return (
     <div className="mb-4">
       <label className="flex items-center gap-2 text-sm font-medium text-ctp-subtext1">
         <span className="text-ctp-overlay0">🔍</span>
-        Filter by repository:
+        {t('filter.placeholder')}
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -24,7 +27,7 @@ export default function RepoFilterBar({ options, value, onChange }: RepoFilterBa
             paddingRight: '2rem',
           }}
         >
-          <option value="">All Repositories</option>
+          <option value="">{t('common.all')}</option>
           {options.map(option => (
             <option key={option.value} value={option.value}>
               {option.label}

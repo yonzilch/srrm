@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import type { Release } from '@srrm/shared';
 import DOMPurify from 'dompurify';
+import { useI18n } from '../contexts/I18nContext';
 
 interface ReleaseTimelineProps {
   releases: Release[];
@@ -86,15 +87,13 @@ function ReleaseCard({ release, isOpen, onToggle }: {
   isOpen: boolean;
   onToggle: () => void;
 }) {
+  const { t } = useI18n();
   const bodyRef = useRef<HTMLDivElement>(null);
 
   const handleTagClick = (e: React.MouseEvent) => {
-    // 不阻止默认行为，让 <a> 正常跳转
-    // 但阻止冒泡到折叠行按钮
     e.stopPropagation();
   };
 
-  // 展开后批量处理外链 → 新标签页打开
   useEffect(() => {
     if (!bodyRef.current) return;
     bodyRef.current.querySelectorAll('a[href^="http"]').forEach((a) => {
@@ -103,14 +102,15 @@ function ReleaseCard({ release, isOpen, onToggle }: {
     });
   }, [release.bodyHtml, release.body, isOpen]);
 
-  // 优先使用 bodyHtml（结构化 HTML），降级使用 body（纯文本）
   const renderBody = () => {
     const html = release.bodyHtml || release.body;
     const hasHtml = !!release.bodyHtml;
 
     if (!html) {
       return (
-        <p className="text-ctp-overlay1 text-sm italic">无 Release Notes</p>
+        <p className="text-ctp-overlay1 text-sm italic">
+          {t('feed.noNotes')}
+        </p>
       );
     }
 
@@ -139,7 +139,6 @@ function ReleaseCard({ release, isOpen, onToggle }: {
       );
     }
 
-    // 降级：纯文本，保留换行
     return (
       <pre className="text-ctp-text text-sm whitespace-pre-wrap font-sans leading-relaxed">
         {html}
@@ -149,21 +148,17 @@ function ReleaseCard({ release, isOpen, onToggle }: {
 
   return (
     <div className="border-b border-white/[0.05]">
-      {/* 折叠行 */}
       <button
         type="button"
         onClick={onToggle}
         className="flex w-full items-center gap-3 py-3 px-4 text-left hover:bg-white/[0.03] transition-colors group rounded-lg mx-[-4px] px-4"
       >
-        {/* 状态圆点 */}
         <span className={`w-2 h-2 rounded-full shrink-0 ${statusColor(release)}`} />
 
-        {/* 仓库名称 */}
         <span className="font-medium text-ctp-subtext1 truncate text-sm">
           {release.repoFullName}
         </span>
 
-        {/* 版本 Tag — 可点击跳转，不触发折叠 */}
         <a
           href={release.htmlUrl}
           target="_blank"
@@ -175,21 +170,18 @@ function ReleaseCard({ release, isOpen, onToggle }: {
           {release.tagName}
         </a>
 
-        {/* pre-release badge */}
         {!!release.isPrerelease ? (
           <span className="inline-flex items-center shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium bg-ctp-orange/15 text-ctp-orange border border-ctp-orange/25">
-            Pre-release
+            {t('feed.prerelease')}
           </span>
         ) : null}
 
-        {/* Release 名称 — 与 tagName 相同时不重复显示 */}
         {release.name && release.name !== release.tagName && (
           <span className="text-ctp-overlay0 text-sm truncate flex-1">
             {release.name}
           </span>
         )}
 
-        {/* 右侧时间与箭头 */}
         <div className="flex items-center gap-2 shrink-0 ml-auto">
           <span className="text-[11px] text-ctp-overlay0">
             {relativeTime(release.publishedAt)}
@@ -204,7 +196,6 @@ function ReleaseCard({ release, isOpen, onToggle }: {
         </div>
       </button>
 
-      {/* 展开内容 */}
       <div
         className={`overflow-hidden transition-[max-height,opacity] duration-200 ease-in-out ${
           isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
@@ -212,23 +203,20 @@ function ReleaseCard({ release, isOpen, onToggle }: {
       >
         <div className={isOpen ? 'overflow-y-auto max-h-96' : ''}>
           <div className="pb-4 px-4 pl-8">
-          {/* 分割线 */}
-          <div className="h-px bg-white/[0.06] mb-3" />
+            <div className="h-px bg-white/[0.06] mb-3" />
 
-          {/* Release Notes */}
-          <div className="space-y-2">
-            <span className="text-[11px] font-medium text-ctp-overlay0 uppercase tracking-wider">
-              Release Notes
-            </span>
-            <div className="bg-ctp-surface0/50 rounded-lg p-3 border border-ctp-surface1/50">
-              {renderBody()}
+            <div className="space-y-2">
+              <span className="text-[11px] font-medium text-ctp-overlay0 uppercase tracking-wider">
+                {t('feed.notes')}
+              </span>
+              <div className="bg-ctp-surface0/50 rounded-lg p-3 border border-ctp-surface1/50">
+                {renderBody()}
+              </div>
             </div>
-          </div>
-
-          {/* View Full 已由 Read full notes 替代，移除 */}
+            {/* View Full 已由 Read full notes 替代，移除 */}
           </div>
         </div>
-</div>
+      </div>
     </div>
   );
 }
@@ -242,7 +230,6 @@ export default function ReleaseTimeline({
   const [activeDate, setActiveDate] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // 按日期分组
   const grouped = releases.reduce(
     (acc: Record<string, Release[]>, release) => {
       if (filter && !release.repoFullName.toLowerCase().includes(filter.toLowerCase())) {
@@ -269,13 +256,11 @@ export default function ReleaseTimeline({
   const handleDateChipClick = useCallback(
     (date: string) => {
       setActiveDate(date);
-      // 滚动到对应日期分组
       const el = document.getElementById(`date-${date}`);
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
       onScrollToDate?.(date);
-      // 1.5秒后自动取消高亮
       setTimeout(() => setActiveDate(null), 1500);
     },
     [onScrollToDate]
@@ -285,7 +270,10 @@ export default function ReleaseTimeline({
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="text-5xl mb-4">📡</div>
-        <h3 className="text-lg font-semibold text-ctp-subtext1 mb-2">No releases yet</h3>
+        <h3 className="text-lg font-semibold text-ctp-subtext1 mb-2">
+          {/* Reuse same empty text as Home */}
+          No releases yet
+        </h3>
         <p className="text-sm text-ctp-overlay0 mb-6">
           Add repositories in the Repos tab and click <em>Check for Updates</em> to start monitoring releases.
         </p>
@@ -301,7 +289,6 @@ export default function ReleaseTimeline({
 
   return (
     <div ref={containerRef}>
-      {/* 日期导航 Chips */}
       <div className="flex flex-wrap gap-2 mb-6">
         {dates.map((date) => (
           <DateChip
@@ -314,23 +301,19 @@ export default function ReleaseTimeline({
         ))}
       </div>
 
-      {/* 发布列表 */}
       <div className="rounded-xl border border-white/[0.05] bg-ctp-base/40 overflow-hidden">
         {dates.map((date, dateIndex) => (
           <div key={date}>
-            {/* 日期分组 Header */}
             <div
               id={`date-${date}`}
               className={`flex items-center gap-3 py-3 px-4 ${dateIndex === 0 ? 'border-b border-white/[0.05]' : 'border-t border-white/[0.05]'}`}
             >
-              {/* 左侧竖线 */}
               <div className="w-px h-5 bg-ctp-blue/40 rounded-full shrink-0" />
               <span className="text-sm font-medium text-ctp-text">
                 {formatDateFriendly(date)}
               </span>
             </div>
 
-            {/* Release 卡片 */}
             {grouped[date].map((release) => (
               <ReleaseCard
                 key={release.id}

@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Repo } from '@srrm/shared';
 import PlatformIcon from './PlatformIcon';
+import { useI18n } from '../contexts/I18nContext';
 
 const platformLabel: Record<string, string> = {
   github: 'GitHub',
@@ -15,12 +16,14 @@ interface RepoTableProps {
 }
 
 export default function RepoTable({ repos, onRemove }: RepoTableProps) {
+  const { t } = useI18n();
+
   if (repos.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-ctp-subtext1 text-lg">📭 No repositories added yet</p>
+        <p className="text-ctp-subtext1 text-lg">📭 {t('repos.noRepos')}</p>
         <p className="text-ctp-overlay0 text-sm mt-2">
-          Add a repository to start monitoring releases.
+          {t('repos.noReposDesc')}
         </p>
       </div>
     );
@@ -32,13 +35,13 @@ export default function RepoTable({ repos, onRemove }: RepoTableProps) {
         <thead>
           <tr className="border-b border-ctp-surface1">
             <th className="px-4 py-3 text-left font-medium text-ctp-subtext2 uppercase text-xs tracking-wider">
-              Repository
+              {t('repos.fullName')}
             </th>
             <th className="px-4 py-3 text-left font-medium text-ctp-subtext2 uppercase text-xs tracking-wider">
               Platform
             </th>
             <th className="px-4 py-3 text-left font-medium text-ctp-subtext2 uppercase text-xs tracking-wider">
-              Added
+              {t('repos.addedAt')}
             </th>
             <th className="px-4 py-3 text-right font-medium text-ctp-subtext2 uppercase text-xs tracking-wider">
               Actions
@@ -80,7 +83,7 @@ export default function RepoTable({ repos, onRemove }: RepoTableProps) {
                   onClick={() => onRemove(repo.id)}
                   className="text-xs text-ctp-red hover:text-ctp-red/80 font-medium transition-colors"
                 >
-                  Remove
+                  {t('repos.remove')}
                 </button>
               </td>
             </tr>

@@ -51,6 +51,24 @@ export default {
 
     if (url.pathname.startsWith('/api') || url.pathname === '/feed.xml') {
       response = await app.fetch(request, env, ctx);
+    } else if (url.pathname === '/favicon.ico') {
+      const faviconUrl = env.FAVICON_URL;
+      if (faviconUrl) {
+        const faviconRes = await fetch(faviconUrl);
+        if (faviconRes.ok) {
+          const headers = new Headers(faviconRes.headers);
+          headers.set('Access-Control-Allow-Origin', '*');
+          headers.set('Cache-Control', 'public, max-age=86400');
+          response = new Response(faviconRes.body, {
+            status: faviconRes.status,
+            headers,
+          });
+        } else {
+          response = new Response('Not Found', { status: 404 });
+        }
+      } else {
+        response = await (env.ASSETS?.fetch(request) ?? new Response('Not Found', { status: 404 }));
+      }
     } else {
       // SPA 前端路由：未匹配 API 的请求交给 Workers Assets 返回静态文件
       response = await (env.ASSETS?.fetch(request) ?? new Response('Not Found', { status: 404 }));
