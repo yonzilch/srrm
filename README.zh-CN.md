@@ -127,20 +127,31 @@ wrangler secret put JWT_SECRET          # 生成方式：openssl rand -hex 32
 wrangler secret put SSO_CLIENT_SECRET
 ```
 
-### 3. 部署 Worker
+### 3. 部署
 
-```bash
-pnpm --filter @srrm/worker deploy
+srrm 采用**单 Worker + Static Assets**架构。Cloudflare Workers 原生支持托管静态资源（GA），无需 Cloudflare Pages。
+
+一次部署，同一域名完成所有事情：
+
+```
+srrm.example.com
+    ├── /api/*     → Hono 处理（Worker 逻辑）
+    ├── /feed.xml  → Hono 处理（Worker 逻辑）
+    └── /*         → 自动 serve React SPA 静态文件
 ```
 
-### 4. 部署前端到 Cloudflare Pages
+只需一条命令：
 
 ```bash
-pnpm --filter @srrm/web build
-wrangler pages deploy apps/web/dist --project-name srrm-web
+pnpm run deploy
 ```
 
-或者在 Cloudflare Pages 控制台中连接仓库，将构建命令设为 `pnpm --filter @srrm/web build`，输出目录设为 `apps/web/dist`。
+该命令会自动：先构建 React SPA → 再部署 Worker（连带静态资源一起上传），Cron 也在同一个 Worker 里一并生效。
+
+如需预览环境部署：
+
+```bash
+pnpm run deploy:preview
 
 ---
 
