@@ -8,31 +8,10 @@
 export type Platform = 'github' | 'gitlab' | 'forgejo' | 'gitea';
 
 /**
- * Cloudflare KV 命名空间
- * 在 Worker 端由绑定注入，Web 端不使用
- */
-export type KVNamespace = unknown;
-
-/**
- * D1 数据库实例
- * 在 Worker 端由绑定注入，Web 端不使用
- */
-export type D1Database = unknown;
-
-/**
- * Hono 扩展上下文 — 在标准 Env 基础上添加 Workers Assets 绑定
- */
-export interface HonoEnv {
-  ASSETS?: { fetch(request: Request): Promise<Response> };
-}
-
-/**
  * 应用环境变量（Hono Bindings）
  * 所有字段均为运行时注入，不硬编码
  */
 export type Env = {
-  KV: KVNamespace;
-  DB: D1Database;
   GITHUB_TOKEN?: string;
   SSO_PROVIDER?: string;
   SSO_ISSUER_URL?: string;
@@ -61,7 +40,7 @@ export type Env = {
 
   // Favicon URL (可选，自定义站点图标)
   FAVICON_URL?: string;
-} & HonoEnv;
+};
 
 /**
  * 监控的 Git 仓库

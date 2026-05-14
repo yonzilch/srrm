@@ -1,6 +1,5 @@
 export interface Env {
   // Cloudflare Workers Runtime Bindings
-  KV?: any;
 
   // Auth - JWT Secret
   JWT_SECRET: string;

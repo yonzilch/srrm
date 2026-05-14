@@ -2,7 +2,7 @@
 // 共享包统一入口
 
 // 类型定义
-export type { Env, D1Database, KVNamespace } from './types';
+export type { Env } from './types';
 export type { Repo } from './types';
 export type { Release } from './types';
 export type { User } from './types';

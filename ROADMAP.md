@@ -11,7 +11,7 @@
 |------|------|
 | **定位** | 聚合多个 Git 仓库的 Release 动态，提供统一 RSS + Web 浏览界面 |
 | **运行环境** | Cloudflare Workers (API + Cron) + Cloudflare Pages (SPA) |
-| **存储方案** | Cloudflare KV（无关系型数据库依赖） |
+|| **存储方案** | Cloudflare D1 (SQLite) | 由 KV 迁移而来，关系型存储，支持复杂查询 |
 | **认证方案** | OAuth2 SSO → JWT → HttpOnly Cookie（无服务端 Session） |
 | **通知方案** | RSS（v1）→ Gotify / Webhook / Apprise（后继扩展） |
 
@@ -25,7 +25,7 @@
 |------|------|------|
 | **Web 框架** | [Hono](https://hono.dev/) | 专为 Edge 设计，体积极小，TypeScript 原生支持 |
 | **定时任务** | Cloudflare Cron Triggers | Workers 原生能力，无需额外基础设施 |
-| **数据存储** | Cloudflare KV | KV 读多写少特性完美匹配本场景；无冷启动 |
+|| **存储方案** | Cloudflare D1 (SQLite) | 由 KV 迁移而来，关系型存储，支持复杂查询和 JOIN ||
 | **认证** | OAuth2 (GitHub / Google) + JWT | 无状态；无需数据库存 Session |
 | **RSS 生成** | 手写 XML 拼接 / `feed` 库 | Workers 环境下依赖越少越好 |
 
@@ -82,20 +82,20 @@ RSS_PUBLIC              = "true"             # 默认启用
 
 ### Module 2 · 数据抓取（Scraper）
 
-**KV 数据结构设计：**
+**D1 数据结构设计：**
 
 ```
-KV Key                        Value
+表名                  用途
 ─────────────────────────────────────────────────────
-config:repos                  JSON[]  仓库列表
-  [{ id, owner, repo, addedAt, addedBy }]
+repos                 仓库列表
+  id, platform, base_url, owner, repo, full_name, repo_url, added_at, added_by
 
-config:scrape_last_run        number  上次抓取时间戳（ms）
+releases              Release 条目（按 published_at 降序索引）
+  id, repo_full_name, repo_url, platform, tag_name, name, body, body_html,
+  published_at, html_url, is_prerelease, is_draft, scraped_at
 
-data:releases                 JSON[]  所有抓取到的 Release 条目
-  [{ id, repo, tagName, name, body, publishedAt, htmlUrl, isNew }]
-
-data:releases:YYYY-MM-DD      JSON[]  按日期索引的快照（可选优化）
+config                配置表（替代 KV 中的 config:* keys）
+  key, value
 ```
 
 **Cron 频率控制策略：**
@@ -109,21 +109,21 @@ crons = ["*/5 * * * *"]
 ```typescript
 // scheduled handler —— 逻辑频率门控
 export async function scheduled(event: ScheduledEvent, env: Env) {
-  const lastRun = Number(await env.KV.get('config:scrape_last_run') ?? 0);
+  const lastRun = await getLastRun(env.DB);
   const interval = Number(env.SCRAPE_INTERVAL_MINUTES) * 60 * 1000;
 
   if (Date.now() - lastRun < interval) return; // 未到间隔，跳过
 
   await runScraper(env);
-  await env.KV.put('config:scrape_last_run', String(Date.now()));
+  await saveLastRun(env.DB, Date.now());
 }
 ```
 
 **抓取流程：**
-1. 从 KV 读取 `config:repos`
+1. 从 D1 查询 `repos` 表获取仓库列表
 2. 并发调用 `GET /repos/{owner}/{repo}/releases?per_page=10`（携带 `GITHUB_TOKEN`）
-3. 与已存储 `data:releases` 对比，提取 `newReleases`
-4. 合并写回 KV（滚动保留最近 500 条）
+3. 与已存储 `releases` 表对比，提取 `newReleases`
+4. 批量 upsert 写入 D1（按日期分片，滚动保留）
 5. （后继）触发通知分发器
 
 ---
@@ -220,12 +220,12 @@ for (const release of newReleases) {
 
 ### Phase 2 · 数据抓取
 
-- [ ] KV 数据结构初始化工具函数
+- [ ] D1 数据表初始化（替代旧 KV 结构）
 - [ ] GitHub Releases API 封装（带分页 + Rate Limit 处理）
 - [ ] Cron `scheduled` handler + 逻辑频率门控
 - [ ] 新 Release 检测逻辑（diff 对比）
 - [ ] `POST /api/admin/scrape/trigger` 手动触发接口
-- [ ] 抓取日志写入 KV
+- [ ] 抓取日志写入 D1
 
 ### Phase 3 · RSS + 公开 API
 
@@ -250,7 +250,7 @@ for (const release of newReleases) {
 ### Phase 6 · 打磨与上线
 
 - [ ] 环境变量全量文档化
-- [ ] 错误边界处理（API 失败、KV 异常）
+- [ ] 错误边界处理（API 失败、D1 异常）
 - [ ] 生产环境 Secrets 配置
 - [ ] 端到端冒烟测试
 - [ ] `README.md` 部署文档
@@ -330,7 +330,7 @@ github-release-monitor/
 │   │   │   │   └── feed.ts        # /feed.xml
 │   │   │   ├── services/
 │   │   │   │   ├── github.ts      # GitHub API 封装
-│   │   │   │   ├── kv.ts          # KV 读写封装
+│   │   │   │   ├── db.ts            # D1 读写封装
 │   │   │   │   ├── scraper.ts     # 抓取核心逻辑
 │   │   │   │   └── notifiers/     # 通知模块（后继扩展）
 │   │   │   │       ├── base.ts
@@ -375,8 +375,8 @@ github-release-monitor/
 
 | 问题 | 说明 | 应对方案 |
 |------|------|---------|
-| KV 最终一致性 | KV 写入后全球同步有延迟（通常 < 60s） | 对本场景无影响，Release 数据非实时 |
+|| D1 查询性能 | 复杂查询可能较慢 | 使用索引字段（published_at, repo_full_name）优化 ||
 | Cron 最小间隔 | Cloudflare 免费版 Cron 最小 1 分钟 | 已通过逻辑门控绕过硬编码限制 |
 | GitHub API Rate Limit | 未认证 60 req/h，Token 认证 5000 req/h | 必须配置 `GITHUB_TOKEN` |
-| KV 免费额度 | 免费版每天 10 万次读 + 1000 次写 | 仓库数量 < 100 时绰绰有余 |
+|| D1 免费额度 | 免费版每天 1000 次读 + 100 次写 | 仓库数量 < 100 时绰绰有余 |
 | Workers CPU 时间 | 免费版单次请求 10ms CPU 时间 | 抓取逻辑用 `ctx.waitUntil` 突破限制 |

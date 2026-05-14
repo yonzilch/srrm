@@ -43,7 +43,7 @@ Agent 在 `apps/worker/` 中编写代码时，必须牢记以下限制：
   - Web 标准 API（fetch, Response, Request, URL, Headers）
   - Web Crypto API（crypto.subtle.*）
   - Hono 框架提供的工具函数
-  - Workers 原生绑定（KV, env）
+  - Workers 原生绑定（D1, env）
 ```
 
 ### 1.3 错误处理规范
@@ -51,14 +51,14 @@ Agent 在 `apps/worker/` 中编写代码时，必须牢记以下限制：
 ```typescript
 // ✅ 正确：所有 async 操作必须有错误处理
 try {
-  const data = await env.KV.get('key');
+  const data = await env.DB.prepare('SELECT * FROM releases WHERE id = ?').bind('xxx').first();
 } catch (e) {
-  console.error('[KV Error]', e);
-  return c.json({ error: 'Storage error' }, 500);
+  console.error('[D1 Error]', e);
+  return c.json({ error: 'Database error' }, 500);
 }
 
 // ❌ 错误：裸 await 无 try/catch
-const data = await env.KV.get('key');
+const data = await env.DB.prepare('SELECT * FROM releases WHERE id = ?').bind('xxx').first();
 ```
 
 ### 1.4 代码风格
@@ -85,7 +85,7 @@ import { feedRoute } from './routes/feed';
 import { authMiddleware } from './middleware/auth';
 
 export type Env = {
-  KV: KVNamespace;
+  DB: D1Database;
   GITHUB_TOKEN: string;
   SSO_PROVIDER: string;
   SSO_ISSUER_URL: string;
@@ -110,28 +110,35 @@ app.route('/api/admin', adminRoutes);
 export default app;
 ```
 
-### 2.2 KV 操作规范
+### 2.2 D1 操作规范
 
-所有 KV 操作必须通过 `services/kv.ts` 封装，禁止在路由文件中直接调用 `env.KV`：
+所有 D1 读写必须通过 `services/db.ts` 封装，禁止在路由文件中直接调用 `env.DB`：
 
 ```typescript
-// services/kv.ts — KV 操作唯一入口
-export const KVKeys = {
-  REPOS: 'config:repos',
-  LAST_RUN: 'config:scrape_last_run',
-  RELEASES: 'data:releases',
-} as const;
+// services/db.ts — D1 操作唯一入口
+import type { D1Database } from '@cloudflare/workers-types';
 
-export async function getRepos(kv: KVNamespace): Promise<Repo[]> {
-  const raw = await kv.get(KVKeys.REPOS);
-  return raw ? JSON.parse(raw) : [];
-}
+// 获取所有仓库
+export async function getRepos(db: D1Database): Promise<Repo[]> { ... }
 
-export async function saveReleases(kv: KVNamespace, releases: Release[]): Promise<void> {
-  // 滚动保留最近 500 条
-  const trimmed = releases.slice(0, 500);
-  await kv.put(KVKeys.RELEASES, JSON.stringify(trimmed));
-}
+// 添加仓库
+export async function addRepo(db: D1Database, repo: Repo): Promise<void> { ... }
+
+// 删除仓库及其所有 releases
+export async function deleteRepo(db: D1Database, id: string): Promise<boolean> { ... }
+
+// 批量 upsert releases，返回新增条目
+export async function upsertReleases(
+  db: D1Database, releases: Release[]
+): Promise<{ inserted: number; updated: number; newReleases: Release[] }> { ... }
+
+// 获取 releases，支持按日期、仓库、平台过滤
+export async function getReleases(
+  db: D1Database, opts?: { date?: string; repoFullName?: string; platform?: string; limit?: number; offset?: number }
+): Promise<{ releases: Release[]; total: number }> { ... }
+
+// 获取有 release 的日期列表
+export async function getReleaseDates(db: D1Database, limit?: number): Promise<string[]> { ... }
 ```
 
 ### 2.3 JWT 处理规范
@@ -420,12 +427,13 @@ pnpm dev          # 启动 Vite dev server
 curl "http://localhost:8787/__scheduled?cron=*+*+*+*+*"
 ```
 
-### KV 本地调试
+### D1 本地调试
 
 ```bash
-# 查看本地 KV 数据
-wrangler kv:key list --binding=KV --local
-wrangler kv:key get "config:repos" --binding=KV --local
+# 查看本地 D1 数据
+wrangler d1 execute <database-name> --local --command "SELECT * FROM repos;"
+wrangler d1 execute <database-name> --local --command "SELECT * FROM releases ORDER BY published_at DESC LIMIT 10;"
+wrangler d1 execute <database-name> --local --command "SELECT * FROM config;"
 ```
 
 ### 关键接口验证 Checklist
@@ -535,10 +543,10 @@ test: add scraper unit tests for release deduplication
 │ RSS 订阅链接         │ GET /feed.xml                            │
 │ 登录入口             │ GET /api/auth/login                      │
 │ 登出                 │ POST /api/auth/logout                    │
-├──────────────────────┼──────────────────────────────────────────┤
-│ KV: 仓库列表         │ config:repos                             │
-│ KV: 上次抓取时间     │ config:scrape_last_run                   │
-│ KV: Release 数据     │ data:releases                            │
+├──────────────────────┬──────────────────────────────────────────┤
+│ D1: 仓库列表表       │ repos                                    │
+│ D1: Release 表      │ releases (按 published_at 降序索引)       │
+│ D1: 配置表          │ config (key-value)                        │
 ├──────────────────────┼──────────────────────────────────────────┤
 │ Worker 本地调试      │ cd apps/worker && pnpm dev               │
 │ Web 本地调试         │ cd apps/web && pnpm dev                  │
