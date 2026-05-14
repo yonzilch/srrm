@@ -50,7 +50,6 @@
   "login.subtitle": "登录以管理你的仓库发布",
   "login.signInWithSSO": "SSO 登录",
   "login.signingIn": "登录中...",
-  "login.demoNote": "此为演示环境，实际生产会重定向到你的身份提供商。",
   "feed.notes": "发布说明",
   "feed.noNotes": "暂无发布说明",
   "feed.prerelease": "预发布",
