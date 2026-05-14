@@ -28,7 +28,7 @@
 **Data flow:**
 
 1. A Cloudflare Cron Trigger fires at a configured interval (default: 60 min).
-2. The Worker fetches new releases from GitHub for every tracked repository.
+2. The Worker fetches new releases from tracked repositories on **GitHub, GitLab, Codeberg (Forgejo), and Gitea**.
 3. New releases are stored in D1 and dispatched to configured notification channels (Gotify / Apprise / Webhook).
 4. The React SPA reads releases via the Worker API and renders a timeline.
 5. A public RSS feed is available for external readers.
@@ -47,6 +47,7 @@
 | **Auth** | OAuth2 / OIDC SSO + JWT (HttpOnly Cookie) |
 | **Scheduling** | Cloudflare Cron Triggers |
 | **Storage** | Cloudflare D1 (SQLite) |
+|| **Supported Platforms** | GitHub · GitLab · Codeberg (Forgejo) · Gitea |
 | **Notifications** | RSS 2.0 · Gotify · Apprise · Webhook |
 
 ---

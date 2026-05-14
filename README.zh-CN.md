@@ -44,7 +44,7 @@
 **数据流：**
 
 1. Cloudflare Cron Trigger 按配置的间隔触发（默认：60 分钟）。
-2. Worker 从 GitHub 获取每个追踪仓库的最新发布。
+2. Worker 从支持的代码托管平台（**GitHub、GitLab、Codeberg/Forgejo、Gitea**）获取每个追踪仓库的最新发布。
 3. 新发布存储到 D1 并推送到已配置的通知渠道（Gotify / Apprise / Webhook）。
 4. React SPA 通过 Worker API 读取发布信息并渲染时间线。
 5. 提供公开的 RSS 订阅源供外部阅读器使用。
@@ -62,7 +62,8 @@
 | **状态管理** | Zustand |
 | **认证** | OAuth2 / OIDC SSO + JWT（HttpOnly Cookie） |
 | **定时任务** | Cloudflare Cron Triggers |
-| **存储** | Cloudflare D1（SQLite） |
+|| **存储** | Cloudflare D1（SQLite） |
+|| **支持的代码托管平台** | GitHub · GitLab · Codeberg (Forgejo) · Gitea |
 | **通知** | RSS 2.0 · Gotify · Apprise · Webhook |
 
 ---
