@@ -1,40 +1,47 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
 import { detectPlatform } from '../utils/platform';
 
-// Platform icon SVG (16x16 inline)
+interface PlatformResult {
+  platform: string;
+  baseUrl: string;
+  owner: string;
+  repo: string;
+}
+
+// Platform icon
 function PlatformIcon({ platform, size = 16 }: { platform: string; size?: number }) {
   const s = size;
   switch (platform) {
     case 'github':
       return (
         <svg width={s} height={s} viewBox="0 0 16 16" fill="currentColor">
-          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
         </svg>
       );
     case 'gitlab':
       return (
         <svg width={s} height={s} viewBox="0 0 16 16" fill="currentColor">
-          <path d="M14.97 8.49L14.19 6.1l-1.54-4.66a.41.41 0 00-.78 0L10.33 6.1H5.67L4.13 1.44a.41.41 0 00-.78 0L1.81 6.1.03 8.49a.83.83 0 00.3 1.13L8 15l7.67-5.38a.83.83 0 00.3-1.13z"/>
+          <path d="M14.97 8.49L14.19 6.1l-1.54-4.66a.41.41 0 00-.78 0L10.33 6.1H5.67L4.13 1.44a.41.41 0 00-.78 0L1.81 6.1.03 8.49a.83.83 0 00.3 1.13L8 15l7.67-5.38a.83.83 0 00.3-1.13z" />
         </svg>
       );
     case 'forgejo':
       return (
         <svg width={s} height={s} viewBox="0 0 16 16" fill="currentColor">
-          <path d="M2 2h4v4H2V2zm8 0h4v4h-4V2zM6 6h4v4H6V6zm-4 4h4v4H2v-4zm8 0h4v4h-4v-4z"/>
+          <path d="M2 2h4v4H2V2zm8 0h4v4h-4V2zM6 6h4v4H6V6zm-4 4h4v4H2v-4zm8 0h4v4h-4v-4z" />
         </svg>
       );
     case 'gitea':
       return (
         <svg width={s} height={s} viewBox="0 0 16 16" fill="currentColor">
-          <path d="M8 0L0 8l8 8 8-8-8-8zm0 2.5l5.5 5.5L8 13.5 2.5 8 8 2.5z"/>
+          <path d="M8 0L0 8l8 8 8-8-8-8zm0 2.5l5.5 5.5L8 13.5 2.5 8 8 2.5z" />
         </svg>
       );
     default:
       return (
         <svg width={s} height={s} viewBox="0 0 16 16" fill="currentColor">
-          <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 14.5a6.5 6.5 0 110-13 6.5 6.5 0 010 13z"/>
+          <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 14.5a6.5 6.5 0 110-13 6.5 6.5 0 010 13z" />
         </svg>
       );
   }
@@ -50,6 +57,7 @@ export default function AddRepoForm({ onSuccess }: AddRepoFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const detected = url.trim() ? detectPlatform(url.trim()) : null;
 
@@ -62,8 +70,7 @@ export default function AddRepoForm({ onSuccess }: AddRepoFormProps) {
     return null;
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAdd = async () => {
     setError(null);
     setSuccess(null);
 
@@ -79,6 +86,7 @@ export default function AddRepoForm({ onSuccess }: AddRepoFormProps) {
       queryClient.invalidateQueries({ queryKey: ['releases'] });
       onSuccess?.();
       setTimeout(() => setSuccess(null), 5000);
+      inputRef.current?.focus();
     } catch (err: any) {
       setError(err.message || '添加仓库失败');
     } finally {
@@ -86,8 +94,15 @@ export default function AddRepoForm({ onSuccess }: AddRepoFormProps) {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAdd();
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="bg-ctp-surface0/50 rounded-xl border border-ctp-surface1 p-5 space-y-4">
+    <div className="bg-ctp-surface0/60 rounded-xl border border-ctp-surface1 p-6 space-y-5">
       <h2 className="text-lg font-semibold text-ctp-text">Add Repository</h2>
       <p className="text-sm text-ctp-subtext1">
         支持 GitHub / GitLab / Forgejo / Gitea（含 Codeberg 等自托管实例）
@@ -108,11 +123,13 @@ export default function AddRepoForm({ onSuccess }: AddRepoFormProps) {
         <label className="block text-sm font-medium text-ctp-subtext1">仓库地址</label>
         <div className="flex items-center gap-2">
           <input
+            ref={inputRef}
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="如 https://codeberg.org/owner/repo 或 owner/repo（默认 GitHub）"
-            className="flex-1 px-3 py-2 bg-ctp-surface1 text-ctp-text rounded-lg border border-ctp-surface2 focus:outline-none focus:ring-1 focus:ring-ctp-blue focus:border-ctp-blue text-sm"
+            onKeyDown={handleKeyDown}
+            placeholder="如 https://github.com/owner/repo 或 owner/repo"
+            className="flex-1 px-3 py-2 bg-ctp-surface1 text-ctp-text rounded-lg border border-ctp-surface2 focus:outline-none focus:ring-1 focus:ring-ctp-blue focus:border-ctp-blue text-sm placeholder-ctp-overlay0 disabled:opacity-50"
             disabled={loading}
           />
           {detected && (
@@ -130,13 +147,28 @@ export default function AddRepoForm({ onSuccess }: AddRepoFormProps) {
         )}
       </div>
 
-      <button
-        type="submit"
-        disabled={loading || !url.trim()}
-        className="inline-flex items-center gap-2 px-4 py-2 bg-ctp-blue text-ctp-base font-medium rounded-lg hover:bg-ctp-blue/90 transition-colors disabled:opacity-50 text-sm"
-      >
-        {loading ? '添加中...' : 'Add Repository'}
-      </button>
-    </form>
+      <div className="flex gap-2">
+        <button
+          onClick={handleAdd}
+          disabled={loading || !url.trim()}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-ctp-blue text-ctp-base font-medium rounded-lg hover:bg-ctp-blue/90 transition-colors disabled:opacity-50 text-sm"
+        >
+          {loading ? '添加中...' : 'Add Repository'}
+        </button>
+        {url.trim() && (
+          <button
+            onClick={() => {
+              setUrl('');
+              setError(null);
+              setSuccess(null);
+              inputRef.current?.focus();
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-ctp-surface1 text-ctp-subtext1 rounded-lg border border-ctp-surface2 hover:bg-ctp-surface2 hover:text-ctp-text transition-colors text-sm"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
