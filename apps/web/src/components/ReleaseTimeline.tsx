@@ -1,5 +1,6 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import type { Release } from '@srrm/shared';
+import DOMPurify from 'dompurify';
 
 interface ReleaseTimelineProps {
   releases: Release[];
@@ -85,10 +86,65 @@ function ReleaseCard({ release, isOpen, onToggle }: {
   isOpen: boolean;
   onToggle: () => void;
 }) {
+  const bodyRef = useRef<HTMLDivElement>(null);
+
   const handleTagClick = (e: React.MouseEvent) => {
     // 不阻止默认行为，让 <a> 正常跳转
     // 但阻止冒泡到折叠行按钮
     e.stopPropagation();
+  };
+
+  // 展开后批量处理外链 → 新标签页打开
+  useEffect(() => {
+    if (!bodyRef.current) return;
+    bodyRef.current.querySelectorAll('a[href^="http"]').forEach((a) => {
+      a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noopener noreferrer');
+    });
+  }, [release.bodyHtml, release.body, isOpen]);
+
+  // 优先使用 bodyHtml（结构化 HTML），降级使用 body（纯文本）
+  const renderBody = () => {
+    const html = release.bodyHtml || release.body;
+    const hasHtml = !!release.bodyHtml;
+
+    if (!html) {
+      return (
+        <p className="text-ctp-overlay1 text-sm italic">无 Release Notes</p>
+      );
+    }
+
+    if (hasHtml) {
+      const clean = DOMPurify.sanitize(html, {
+        ALLOWED_TAGS: [
+          'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+          'p', 'br', 'hr',
+          'ul', 'ol', 'li',
+          'blockquote', 'pre', 'code',
+          'strong', 'em', 'del', 's',
+          'a', 'img',
+          'table', 'thead', 'tbody', 'tr', 'th', 'td',
+          'details', 'summary',
+        ],
+        ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'rel'],
+        FORCE_BODY: false,
+      });
+
+      return (
+        <div
+          ref={bodyRef}
+          className="release-notes prose prose-invert prose-sm max-w-none"
+          dangerouslySetInnerHTML={{ __html: clean }}
+        />
+      );
+    }
+
+    // 降级：纯文本，保留换行
+    return (
+      <pre className="text-ctp-text text-sm whitespace-pre-wrap font-sans leading-relaxed">
+        {html}
+      </pre>
+    );
   };
 
   return (
@@ -154,7 +210,8 @@ function ReleaseCard({ release, isOpen, onToggle }: {
           isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="pb-4 px-4 pl-8">
+        <div className={isOpen ? 'overflow-y-auto max-h-96' : ''}>
+          <div className="pb-4 px-4 pl-8">
           {/* 分割线 */}
           <div className="h-px bg-white/[0.06] mb-3" />
 
@@ -164,28 +221,14 @@ function ReleaseCard({ release, isOpen, onToggle }: {
               Release Notes
             </span>
             <div className="bg-ctp-surface0/50 rounded-lg p-3 border border-ctp-surface1/50">
-              <pre className="text-sm text-ctp-subtext1 whitespace-pre-wrap font-sans leading-relaxed">
-                {release.body.length > 200
-                  ? release.body.slice(0, 200) + '...'
-                  : release.body || 'No notes provided.'}
-              </pre>
-              {release.body.length > 200 && (
-                <a
-                  href={release.htmlUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="inline-block mt-2 text-xs text-ctp-blue hover:underline"
-                >
-                  Read full notes ↗
-                </a>
-              )}
+              {renderBody()}
             </div>
           </div>
 
           {/* View Full 已由 Read full notes 替代，移除 */}
+          </div>
         </div>
-      </div>
+</div>
     </div>
   );
 }

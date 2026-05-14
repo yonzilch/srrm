@@ -78,18 +78,23 @@ export function detectPlatform(input: string): {
 }
 
 /**
- * 根据平台构建 Atom feed URL
+ * 根据平台构建 Feed URL（Atom 1.0 或 RSS 2.0）
  */
 export function buildFeedUrl(repo: Pick<Repo, 'platform' | 'baseUrl' | 'owner' | 'repo'>): string {
-  const base = repo.baseUrl + '/' + repo.owner + '/' + repo.repo;
-  if (repo.platform === 'gitlab') {
-    return base + '/-/releases.atom';
+  const base = repo.baseUrl.replace(/\/$/, '');
+  const path = `${repo.owner}/${repo.repo}`;
+
+  switch (repo.platform) {
+    case 'github':
+      return `${base}/${path}/releases.atom`;
+    case 'gitlab':
+      return `${base}/${path}/-/releases.atom`;
+    case 'forgejo':
+    case 'gitea':
+      return `${base}/${path}/releases.rss`;
+    default:
+      return `${base}/${path}/releases.rss`;
   }
-  // Forgejo/Codeberg 使用 RSS 2.0 格式
-  if (repo.platform === 'forgejo') {
-    return base + '/releases.rss';
-  }
-  return base + '/releases.atom';
 }
 
 /**

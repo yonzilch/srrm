@@ -6,9 +6,8 @@ import {
   saveLastRun,
 } from './db';
 import { buildFeedUrl, buildAuthHeaders, buildReleaseUrl } from './platform';
-import { parseFeed, isPrerelease } from './atom';
-import { parseMarkdown as markdownToHtml } from '@srrm/shared';
-import type { Env, Repo, Release } from '@srrm/shared';
+import { parseFeed, isPrerelease, stripHtmlToText, sanitizeHtmlForStorage } from './feed';
+import type { Env, Repo, Release, Platform } from '@srrm/shared';
 
 /** 按 publishedAt 日期分组 */
 function groupByDate(releases: Release[]): Record<string, Release[]> {
@@ -42,7 +41,7 @@ function extractTagName(entry: { link: string; id: string }, repo: Repo): string
 /** 抓取单个仓库的 releases（通过 Atom feed） */
 async function fetchRepoReleases(repo: Repo, env: Env): Promise<Release[]> {
   const feedUrl = buildFeedUrl(repo);
-  const headers = buildAuthHeaders(repo.platform, env as unknown as Record<string, string | undefined>);
+  const headers = buildAuthHeaders(repo.platform as Platform, env as unknown as Record<string, string | undefined>);
 
   const res = await fetch(feedUrl, { headers });
 
@@ -64,7 +63,7 @@ async function fetchRepoReleases(repo: Repo, env: Env): Promise<Release[]> {
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i];
     const tagName = extractTagName(entry, repo);
-    const bodyMd = entry.content;
+    const bodyMd = entry.contentHtml;
 
     releases.push({
       id: entry.id || entry.link,
@@ -73,9 +72,9 @@ async function fetchRepoReleases(repo: Repo, env: Env): Promise<Release[]> {
       platform: repo.platform,
       tagName,
       name: entry.title || tagName,
-      body: bodyMd,
-      bodyHtml: markdownToHtml(bodyMd),
-      publishedAt: entry.updated,
+      body: stripHtmlToText(bodyMd),
+      bodyHtml: sanitizeHtmlForStorage(bodyMd),
+      publishedAt: entry.publishedAt,
       htmlUrl: entry.link || buildReleaseUrl(repo, tagName),
       isPrerelease: isPrerelease(entry),
       isDraft: false,
@@ -117,17 +116,26 @@ export async function runScraper(env: Env): Promise<void> {
 
   console.log('[Scraper] Found ' + newReleases.length + ' new releases');
 
-  // 按日期分组写入 D1（使用 upsertReleases 替代旧 KV 分片逻辑）
+  // 批量写入 D1（使用 upsertReleases 替代旧 KV 分片逻辑）
   const byDate = groupByDate(newReleases);
   const dates = Object.keys(byDate);
+  let allNewReleases: Release[] = [];
   for (let i = 0; i < dates.length; i++) {
     const date = dates[i];
     const batchReleases = byDate[date];
     // 每批最多 100 条写入
     for (let j = 0; j < batchReleases.length; j += 100) {
       const chunk = batchReleases.slice(j, j + 100);
-      await upsertReleases(env.DB as any, chunk);
+      const result = await upsertReleases(env.DB as any, chunk);
+      allNewReleases = allNewReleases.concat(result.newReleases);
     }
+  }
+
+  // 触发通知（仅对新插入的 release）
+  if (allNewReleases.length > 0) {
+    console.log(`[Scraper] ${allNewReleases.length} new releases, dispatching notifications...`);
+    const { dispatchNotifications } = await import('./notifiers/index');
+    await dispatchNotifications(allNewReleases, env);
   }
 
   // 更新最后抓取时间
