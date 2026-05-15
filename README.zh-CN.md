@@ -15,14 +15,14 @@
 
 ```mermaid
 flowchart LR
-    Cron[⏱️ 定时触发器<br/>默认：60 分钟] -- 1. 触发 --> B[⚙️ Cloudflare Workers<br/>Hono API + Cron]
-    B -- 2. 获取发布版本 --> D[🌐 Git 平台 API<br/>GitHub / GitLab / Codeberg / Gitea]
+    Cron[⏱️ 定时触发器<br/>默认：60 分钟] -- 触发 --> B[⚙️ Cloudflare Workers<br/>Hono API + Cron]
+    B -- 获取发布版本 --> D[🌐 Git 平台 API<br/>GitHub / GitLab / Codeberg / Gitea]
     
-    B -- 3. 存储发布版本 --> C[🗄️ Cloudflare D1<br/>SQLite]
-    B -- 3. 派发通知 --> E[🔔 通知渠道<br/>Gotify / Apprise / Webhook]
+    B -- 存储发布版本 --> C[🗄️ Cloudflare D1<br/>SQLite]
+    B -- 派发通知 --> E[🔔 通知渠道<br/>Gotify / Apprise / Webhook]
     
-    A[📃 React 单页面应用] -- 4. 请求 API --> B
-    F[📡 外部阅读器] -- 5. 请求 RSS 订阅 --> B
+    A[📃 React 单页面应用] -- 请求 API --> B
+    F[📡 外部阅读器] -- 请求 RSS 订阅 --> B
 ```
 
 **数据流：**

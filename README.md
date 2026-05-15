@@ -15,14 +15,14 @@
 
 ```mermaid
 flowchart LR
-    Cron[⏱️ Cron Trigger<br/>default: 60 min] -- 1. Trigger --> B[⚙️ Cloudflare Workers<br/>Hono API + Cron]
-    B -- 2. Fetches releases --> D[🌐 Git Repos API<br/>GitHub / GitLab / Codeberg / Gitea]
+    Cron[⏱️ Cron Trigger<br/>default: 60 min] -- Trigger --> B[⚙️ Cloudflare Workers<br/>Hono API + Cron]
+    B -- Fetches releases --> D[🌐 Git Repos API<br/>GitHub / GitLab / Codeberg / Gitea]
     
-    B -- 3. Store releases --> C[🗄️ Cloudflare D1<br/>SQLite]
-    B -- 3. Dispatch notifications --> E[🔔 Notification Channels<br/>Gotify / Apprise / Webhook]
+    B -- Store releases --> C[🗄️ Cloudflare D1<br/>SQLite]
+    B -- Dispatch notifications --> E[🔔 Notification Channels<br/>Gotify / Apprise / Webhook]
     
-    A[📃 React SPA] -- 4. API Requests --> B
-    F[📡 External Readers] -- 5. RSS Requests --> B
+    A[📃 React SPA] -- API Requests --> B
+    F[📡 External Readers] -- RSS Requests --> B
 ```
 
 **Data flow:**
