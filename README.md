@@ -1,7 +1,7 @@
 # SRRM — Serverless Repository Release Monitor
 
 > Track releases across multiple Git repositories in one place.  
-> Delivers a unified RSS feed and a clean web UI — powered entirely by Cloudflare Workers, Pages, and D1. No server to manage.
+> Delivers a unified RSS feed and a clean web UI — powered entirely by Cloudflare Workers, and D1. No server to manage.
 
 [![LICENSE](https://img.shields.io/badge/License-MIT-Green.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-brightgreen)](https://nodejs.org)
@@ -15,9 +15,14 @@
 
 ```mermaid
 flowchart LR
-    A[☁️ Cloudflare Pages<br/>React SPA] -- API Requests --> B[⚙️ Cloudflare Workers<br/>Hono API + Cron]
-    B -- Read/Write Data --> C[🗄️ Cloudflare D1<br/>SQLite]
-    B -- Scheduled Scrape --> D[🌐 Git Repos API<br/>GitHub / GitLab / Codeberg / Gitea]
+    Cron[⏱️ Cron Trigger<br/>default: 60 min] -- 1. Trigger --> B[⚙️ Cloudflare Workers<br/>Hono API + Cron]
+    B -- 2. Fetches releases --> D[🌐 Git Repos API<br/>GitHub / GitLab / Codeberg / Gitea]
+    
+    B -- 3. Store releases --> C[🗄️ Cloudflare D1<br/>SQLite]
+    B -- 3. Dispatch notifications --> E[🔔 Notification Channels<br/>Gotify / Apprise / Webhook]
+    
+    A[📃 React SPA] -- 4. API Requests --> B
+    F[📡 External Readers] -- 5. RSS Requests --> B
 ```
 
 **Data flow:**
@@ -50,9 +55,8 @@ flowchart LR
 ## Prerequisites
 
 - **Node.js** ≥ 18 and **pnpm** ≥ 8
-- A **Cloudflare account** with Workers, D1, and Pages enabled
+- A **Cloudflare account** with Workers and D1 enabled
 - [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/) installed and authenticated (`wrangler login`)
-- A **GitHub Personal Access Token** (PAT) with `public_repo` scope (or `repo` for private repos)
 - An **OIDC-compatible SSO provider**
 
 ---
@@ -213,7 +217,7 @@ SRRM auto-detects which notifiers are active based on the presence of their envi
 ```
 srrm/
 ├── apps/
-│   ├── worker/          # Cloudflare Worker — Hono API, cron, notifiers
+│   ├── worker/          # Hono API, cron, notifiers
 │   │   ├── src/
 │   │   │   ├── index.ts         # Entry point & route registration
 │   │   │   ├── scheduled.ts     # Cron handler (scrape + notify)
@@ -226,7 +230,7 @@ srrm/
 │   │   │       └── notifiers/   # gotify · apprise · webhook
 │   │   └── wrangler.toml
 │   │
-│   └── web/             # Cloudflare Pages — React SPA
+│   └── web/             # React SPA
 │       └── src/
 │           ├── pages/           # Home · Login · Feed · Admin
 │           ├── components/      # Timeline, filters, forms

@@ -1,7 +1,7 @@
 # SRRM — 无服务器仓库发布监控器
 
 > 在一处追踪多个 Git 仓库的发布动态。  
-> 提供统一的 RSS 订阅源和简洁的 Web UI —— 完全由 Cloudflare Workers、Pages 和 D1 驱动。无需管理服务器。
+> 提供统一的 RSS 订阅源和简洁的 Web UI —— 完全由 Cloudflare Workers 和 D1 驱动。无需管理服务器。
 
 [![LICENSE](https://img.shields.io/badge/License-MIT-Green.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-brightgreen)](https://nodejs.org)
@@ -15,9 +15,14 @@
 
 ```mermaid
 flowchart LR
-    A[☁️ Cloudflare Pages<br/>React SPA] -- 请求 API --> B[⚙️ Cloudflare Workers<br/>Hono API + Cron]
-    B -- 读写数据 --> C[🗄️ Cloudflare D1<br/>SQLite]
-    B -- 定时抓取 --> D[🌐 Git Repos API<br/>GitHub / GitLab / Codeberg / Gitea]
+    Cron[⏱️ 定时触发器<br/>默认：60 分钟] -- 1. 触发 --> B[⚙️ Cloudflare Workers<br/>Hono API + Cron]
+    B -- 2. 获取发布版本 --> D[🌐 Git 平台 API<br/>GitHub / GitLab / Codeberg / Gitea]
+    
+    B -- 3. 存储发布版本 --> C[🗄️ Cloudflare D1<br/>SQLite]
+    B -- 3. 派发通知 --> E[🔔 通知渠道<br/>Gotify / Apprise / Webhook]
+    
+    A[📃 React 单页面应用] -- 4. 请求 API --> B
+    F[📡 外部阅读器] -- 5. 请求 RSS 订阅 --> B
 ```
 
 **数据流：**
@@ -50,9 +55,8 @@ flowchart LR
 ## 前置条件
 
 - **Node.js** ≥ 18 且 **pnpm** ≥ 8
-- 一个启用了 Workers、D1 和 Pages 的 **Cloudflare 账户**
+- 一个启用了 Workers、D1 的 **Cloudflare 账户**
 - 已安装并完成认证的 [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/)（`wrangler login`）
-- 一个具有 `public_repo` 权限（若需访问私有仓库则为 `repo` 权限）的 **GitHub 个人访问令牌 (PAT)**
 - 一个 **兼容 OIDC 的 SSO 提供商**
 
 ---
@@ -213,7 +217,7 @@ SRRM 根据环境变量的存在与否自动检测哪些通知器处于激活状
 ```
 srrm/
 ├── apps/
-│   ├── worker/          # Cloudflare Worker — Hono API，定时任务，通知器
+│   ├── worker/          # Hono API，定时任务，通知器
 │   │   ├── src/
 │   │   │   ├── index.ts         # 入口文件与路由注册
 │   │   │   ├── scheduled.ts     # Cron 处理器（抓取 + 通知）
@@ -226,7 +230,7 @@ srrm/
 │   │   │       └── notifiers/   # gotify · apprise · webhook
 │   │   └── wrangler.toml
 │   │
-│   └── web/             # Cloudflare Pages — React SPA
+│   └── web/             # React SPA
 │       └── src/
 │           ├── pages/           # 首页 · 登录 · 订阅 · 管理
 │           ├── components/      # 时间线，过滤器，表单
