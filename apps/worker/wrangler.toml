@@ -1,13 +1,92 @@
 name = "srrm"
 main = "src/index.ts"
-compatibility_date = "2024-12-01"
+compatibility_date = "2026-05-15"
+
+[assets]
+directory = "../web/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "srrm-db"
 database_id = "your-database-id"
 
-[assets]
-directory = "../web/dist"
-binding = "ASSETS"
-not_found_handling = "single-page-application"
+# ==========================================
+# Configuration Guide
+# ==========================================
+# Fill in the values below, then run: pnpm run deploy
+#
+# ⚠️  This file contains secrets — do NOT commit it to a public repository.
+#     Add it to .gitignore if your repo is public:
+#       echo "apps/worker/wrangler.toml" >> .gitignore
+#
+# For local development, copy required vars to apps/worker/.dev.vars instead.
+# ==========================================
+
+[vars]
+# ==========================================
+# Required Variables
+# ==========================================
+
+# Random string ≥ 32 bytes used to sign session JWTs (generate with: openssl rand -hex 32)
+JWT_SECRET = ""
+
+# OIDC Provider issuer URL (e.g. https://sso.example.com)
+SSO_ISSUER_URL = ""
+
+# OIDC Client ID
+SSO_CLIENT_ID = ""
+
+# OIDC Client Secret
+SSO_CLIENT_SECRET = ""
+
+# OAuth callback URL (e.g. https://srrm.example.com/api/auth/callback)
+SSO_CALLBACK_URL = ""
+
+# Comma-separated list of emails granted admin access
+ADMIN_EMAILS = ""
+
+# Public URL of the frontend (e.g. https://srrm.example.com)
+APP_BASE_URL = ""
+
+# ==========================================
+# Optional Variables
+# ==========================================
+
+# GitHub Personal Access Token (PAT) — prevents rate limiting and enables private repo access
+GITHUB_TOKEN = ""
+
+# How often to poll GitHub for new releases (in minutes)
+# Default: 60
+SCRAPE_INTERVAL_MINUTES = "60"
+
+# Whether the /feed.xml endpoint requires authentication
+# Default: true
+RSS_PUBLIC = "true"
+
+# --- Gotify Notification ---
+# Gotify server base URL
+GOTIFY_URL = ""
+# Gotify application token
+GOTIFY_TOKEN = ""
+# Gotify message priority (1–10)
+# Default: 5
+GOTIFY_PRIORITY = "5"
+
+# --- Apprise Notification ---
+# Apprise HTTP API base URL
+APPRISE_API_URL = ""
+# Comma-separated Apprise notification targets
+APPRISE_URLS = ""
+# Apprise tag to filter notification targets
+APPRISE_TAG = ""
+
+# --- Webhook Notification ---
+# Webhook target URL
+WEBHOOK_URL = ""
+# HMAC-SHA256 signing secret for webhook payloads
+WEBHOOK_SECRET = ""
+# HTTP method used for webhook delivery
+# Default: POST
+WEBHOOK_METHOD = "POST"
