@@ -8,7 +8,7 @@ export function useReleases(params?: { date?: string; repo?: string }) {
 
   return useQuery<Release[]>({
     queryKey: ['releases', params],
-    queryFn: () => api.releases.list(params),
+    queryFn: () => api.releases.list({ ...params, limit: 100 }),
     staleTime: 1000 * 60, // 1分钟
   });
 }

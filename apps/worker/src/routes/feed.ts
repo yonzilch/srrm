@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { getLatestReleases, getReleasesByDate, getRepos } from '../services/db';
+import { getReleases, getReleasesByDate, getRepos } from '../services/db';
 import type { Env } from '@srrm/shared';
 import type { Release } from '@srrm/shared';
 
@@ -60,7 +60,7 @@ function generateAtom(releases: Release[], baseUrl: string): string {
 feedRoute.get('/', async (c) => {
   try {
     const { repo } = c.req.query();
-    let releases: Release[] = (await getLatestReleases(c.env.DB as any)) as Release[];
+    let releases: Release[] = (await getReleases(c.env.DB as any, { limit: 50 })).releases as Release[];
 
     if (repo) {
       releases = releases.filter((r: Release) =>
@@ -68,7 +68,6 @@ feedRoute.get('/', async (c) => {
       );
     }
 
-    // 保留最近 50 条用于 feed
     const limited = releases.slice(0, 50);
 
     const baseUrl = c.env.APP_BASE_URL || '';

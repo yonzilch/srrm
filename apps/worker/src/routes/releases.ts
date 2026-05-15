@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import {
   getReleasesByDate,
-  getLatestReleases,
+  getReleases,
   getReleasesIndex,
 } from '../services/db';
 import type { Env } from '@srrm/shared';
@@ -9,36 +9,39 @@ import type { Release } from '@srrm/shared';
 
 export const releasesRoutes = new Hono<{ Bindings: Env }>();
 
-// GET /api/releases — 默认返回最近 100 条（releases:latest）
+// GET /api/releases — 默认返回最近 releases
 // GET /api/releases?date=YYYY-MM-DD — 返回某日 releases
-// GET /api/releases?page=x&limit=y — 分页兼容（读取 latest）
+// GET /api/releases?page=x&limit=y — 分页
 releasesRoutes.get('/', async (c) => {
   try {
     const { date, page = '1', limit = '20' } = c.req.query();
 
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const offset = (pageNum - 1) * limitNum;
+
     let releases: Release[];
+    let total: number;
 
     if (date) {
       // 按日期查询
-      releases = (await getReleasesByDate(c.env.DB as any, date)) as Release[];
+      const result = await getReleases(c.env.DB as any, { date, limit: limitNum, offset });
+      releases = result.releases as Release[];
+      total = result.total;
     } else {
       // 默认查询最近 releases
-      releases = (await getLatestReleases(c.env.DB as any)) as Release[];
+      const result = await getReleases(c.env.DB as any, { limit: limitNum, offset });
+      releases = result.releases as Release[];
+      total = result.total;
     }
 
-    // 分页
-    const pageNum = Math.max(1, parseInt(page));
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
-    const start = (pageNum - 1) * limitNum;
-    const paginated = releases.slice(start, start + limitNum);
-
     return c.json({
-      releases: paginated,
+      releases,
       pagination: {
         page: pageNum,
         limit: limitNum,
-        total: releases.length,
-        pages: Math.ceil(releases.length / limitNum),
+        total,
+        pages: Math.ceil(total / limitNum),
       },
     });
   } catch (err) {
@@ -47,13 +50,12 @@ releasesRoutes.get('/', async (c) => {
   }
 });
 
-// GET /api/releases/:id — 按 ID 查找（遍历 latest）
+// GET /api/releases/:id — 按 ID 查找
 releasesRoutes.get('/:id', async (c) => {
   const { id } = c.req.param();
   try {
-    const releases: Release[] = (await getLatestReleases(c.env.DB as any)) as Release[];
-    const releaseArr: Release[] = releases.filter((r: Release) => r.id === id);
-    const release = releaseArr.length > 0 ? releaseArr[0] : null;
+    const result = await getReleases(c.env.DB as any, { limit: 100, offset: 0 });
+    const release = result.releases.filter((r: Release) => r.id === id)[0] ?? null;
 
     if (!release) {
       return c.json({ error: 'Release not found' }, 404);

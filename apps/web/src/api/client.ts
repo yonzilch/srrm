@@ -27,7 +27,9 @@ interface PaginatedResponse<T> {
 
 export const api = {
   releases: {
-    list: async (params?: { date?: string; repo?: string }): Promise<Release[]> => {
+    list: async (
+      params?: { date?: string; repo?: string; page?: number; limit?: number }
+    ): Promise<Release[]> => {
       const qs = new URLSearchParams(params as any);
       const result = await request<PaginatedResponse<Release>>(`/api/releases?${qs}`);
       return result.releases;
