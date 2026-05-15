@@ -1,6 +1,6 @@
 name = "srrm"
 main = "src/index.ts"
-compatibility_date = "2026-05-15"
+compatibility_date = "2025-07-18"
 
 [assets]
 directory = "../web/dist"
