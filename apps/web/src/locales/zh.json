@@ -16,6 +16,7 @@
   "releases.updated": "已更新",
   "releases.checkForUpdates": "检查更新",
   "releases.recentlyUpdated": "最近更新 {time}",
+  "releases.pageInfo": "第 {current} 页 / 共 {total} 页",
   "repos.title": "仓库管理",
   "repos.monitoring": "正在监控 {count} 个仓库",
   "repos.add": "添加仓库",
@@ -60,6 +61,8 @@
   "common.error": "错误",
   "common.retry": "重试",
   "common.all": "全部",
+  "common.previous": "上一页",
+  "common.next": "下一页",
   "common.supportedPlatforms": "支持 GitHub、GitLab、Forgejo 和 Gitea（包括 Codeberg 等自托管实例）",
   "filter.placeholder": "按仓库筛选..."
 }

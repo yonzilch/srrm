@@ -29,10 +29,9 @@ export const api = {
   releases: {
     list: async (
       params?: { date?: string; repo?: string; page?: number; limit?: number }
-    ): Promise<Release[]> => {
-      const qs = new URLSearchParams(params as any);
-      const result = await request<PaginatedResponse<Release>>(`/api/releases?${qs}`);
-      return result.releases;
+    ): Promise<PaginatedResponse<Release>> => {
+      const qs = new URLSearchParams(params as Record<string, string>);
+      return request<PaginatedResponse<Release>>(`/api/releases?${qs}`);
     },
   },
   admin: {

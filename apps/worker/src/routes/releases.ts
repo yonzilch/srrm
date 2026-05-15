@@ -14,7 +14,7 @@ export const releasesRoutes = new Hono<{ Bindings: Env }>();
 // GET /api/releases?page=x&limit=y — 分页
 releasesRoutes.get('/', async (c) => {
   try {
-    const { date, page = '1', limit = '20' } = c.req.query();
+    const { date, page = '1', limit = '50' } = c.req.query();
 
     const pageNum = Math.max(1, parseInt(page));
     const limitNum = Math.min(100, Math.max(1, parseInt(limit)));

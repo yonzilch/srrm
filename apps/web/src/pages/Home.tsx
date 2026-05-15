@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useReleases, useAdminRepos, useTriggerScrape } from '../hooks/useReleases';
 import ReleaseTimeline from '../components/ReleaseTimeline';
 import RepoFilterBar from '../components/RepoFilterBar';
@@ -34,10 +34,14 @@ function formatDateTime(dateStr: string): string {
 
 export default function Home() {
   const { t } = useI18n();
-  const { data: releases, isLoading, error } = useReleases();
+  const [currentPage, setCurrentPage] = useState(1);
+  const { data, isLoading, error } = useReleases({ page: currentPage, limit: 50 });
   const { data: repos = [], isLoading: reposLoading, refetch } = useAdminRepos();
   const triggerScrape = useTriggerScrape();
-  const [filter, setFilter] = React.useState<string>('');
+  const [filter, setFilter] = useState<string>('');
+
+  const releases = data?.releases ?? [];
+  const totalPages = data?.pagination?.pages ?? 1;
 
   const filteredReleases = releases
     ? releases.filter((r) => {
@@ -48,14 +52,26 @@ export default function Home() {
 
   // 最后更新时间
   const lastRunText = React.useMemo(() => {
-    if (releases && releases.length > 0) {
-      const sorted = [...releases].sort(
+    if (data?.releases && data.releases.length > 0) {
+      const sorted = [...data.releases].sort(
         (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
       );
       return formatDateTime(sorted[0].publishedAt);
     }
     return '—';
-  }, [releases]);
+  }, [data?.releases]);
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((p) => p - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((p) => p + 1);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -113,9 +129,38 @@ export default function Home() {
       {/* 发布时间线 */}
       {filteredReleases.length > 0 ? (
         <ReleaseTimeline releases={filteredReleases} filter={filter} />
-      ) : (
-        <EmptyState onAddRepo={() => {}} />
+      ) : null}
+
+      {/* 分页控件 */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-4 mt-6 pb-8">
+          <button
+            onClick={handlePrevPage}
+            disabled={currentPage <= 1}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-ctp-surface1 text-ctp-subtext1 rounded-lg border border-ctp-surface2 hover:bg-ctp-surface2 hover:text-ctp-text transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            {t('common.previous')}
+          </button>
+          <span className="text-sm text-ctp-subtext1">
+            {t('releases.pageInfo', { current: currentPage, total: totalPages })}
+          </span>
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage >= totalPages}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-ctp-surface1 text-ctp-subtext1 rounded-lg border border-ctp-surface2 hover:bg-ctp-surface2 hover:text-ctp-text transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+          >
+            {t('common.next')}
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
       )}
+
+      {filteredReleases.length === 0 && <EmptyState onAddRepo={() => {}} />}
     </div>
   );
 }
