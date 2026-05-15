@@ -41,7 +41,7 @@
   "settings.testSuccess": "✓ 测试通知已发送",
   "settings.testFailure": "✗ 发送失败: {error}",
   "settings.about": "关于",
-  "settings.version": "SRRM v1.3.3",
+  "settings.version": "SRRM v1.3.4",
   "settings.aboutDesc": "聚合 GitHub、GitLab、Forgejo 和 Gitea 的仓库发布信息。",
   "repos.remove": "移除",
   "repos.removing": "移除中...",
