@@ -192,9 +192,9 @@ SRRM 根据环境变量的存在与否自动检测哪些通知器处于激活状
 
 | 渠道 | 必需变量 | 备注 |
 |---|---|---|
-| **Gotify** | `GOTIFY_URL`, `GOTIFY_TOKEN` | 自托管推送通知 |
-| **Apprise** | `APPRISE_API_URL` | 通过 [Apprise](https://github.com/caronc/apprise) 支持 50+ 种服务 |
-| **Webhook** | `WEBHOOK_URL` | 通用 HTTP POST；可选择使用 HMAC-SHA256 签名 |
+| **[Gotify](https://github.com/gotify/server)** | `GOTIFY_URL`, `GOTIFY_TOKEN` | 简单的自托管推送通知服务，使用 Go 语言编写 |
+| **[Apprise](https://github.com/caronc/apprise)** | `APPRISE_API_URL` | 强大的通知平台，支持多种服务 |
+| **Webhook** | `WEBHOOK_URL` | 通用 HTTP POST；可选使用 HMAC-SHA256 签名 |
 
 ### 添加自定义通知器
 

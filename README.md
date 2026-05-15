@@ -192,8 +192,8 @@ SRRM auto-detects which notifiers are active based on the presence of their envi
 
 | Channel | Required variables | Notes |
 |---|---|---|
-| **Gotify** | `GOTIFY_URL`, `GOTIFY_TOKEN` | Self-hosted push notifications |
-| **Apprise** | `APPRISE_API_URL` | 50+ services via [Apprise](https://github.com/caronc/apprise) |
+| **[Gotify](https://github.com/gotify/server)** | `GOTIFY_URL`, `GOTIFY_TOKEN` | Simple self-hosted push notifications, written in Go |
+| **[Apprise](https://github.com/caronc/apprise)** | `APPRISE_API_URL` | Powerful notification platform supports many services |
 | **Webhook** | `WEBHOOK_URL` | Generic HTTP POST; optionally signed with HMAC-SHA256 |
 
 ### Adding a custom notifier
