@@ -13,22 +13,17 @@
 
 ## How It Works
 
-```
-┌──────────────┐     ┌──────────────────────┐     ┌──────────────┐
-│  Cloudflare  │     │   Cloudflare Workers │     │  Cloudflare  │
-│    Pages     │────▶│   (Hono API + Cron)  │────▶│  D1 (SQLite) │
-│  React SPA   │     │                      │     │              │
-└──────────────┘     └──────────┬───────────┘     └──────────────┘
-                                │
-                    ┌───────────▼───────────┐
-                    │   GitHub Releases API │
-                    └───────────────────────┘
+```mermaid
+flowchart LR
+    A[☁️ Cloudflare Pages<br/>React SPA] -- API Requests --> B[⚙️ Cloudflare Workers<br/>Hono API + Cron]
+    B -- Read/Write Data --> C[🗄️ Cloudflare D1<br/>SQLite]
+    B -- Scheduled Scrape --> D[🌐 Git Repos API<br/>GitHub / GitLab / Codeberg / Gitea]
 ```
 
 **Data flow:**
 
 1. A Cloudflare Cron Trigger fires at a configured interval (default: 60 min).
-2. The Worker fetches new releases from tracked repositories on **GitHub, GitLab, Codeberg (Forgejo), and Gitea**.
+2. The Worker fetches new releases from tracked repositories on multiple provider, currently support: **GitHub, GitLab, Codeberg (Forgejo), and Gitea**.
 3. New releases are stored in D1 and dispatched to configured notification channels (Gotify / Apprise / Webhook).
 4. The React SPA reads releases via the Worker API and renders a timeline.
 5. A public RSS feed is available for external readers.
@@ -47,7 +42,7 @@
 | **Auth** | OAuth2 / OIDC SSO + JWT (HttpOnly Cookie) |
 | **Scheduling** | Cloudflare Cron Triggers |
 | **Storage** | Cloudflare D1 (SQLite) |
-|| **Supported Platforms** | GitHub · GitLab · Codeberg (Forgejo) · Gitea |
+| **Supported Platforms** | GitHub · GitLab · Codeberg (Forgejo) · Gitea |
 | **Notifications** | RSS 2.0 · Gotify · Apprise · Webhook |
 
 ---
@@ -62,119 +57,93 @@
 
 ---
 
-## Local Development
+## Deployment
+
+### 1. Clone and install
 
 ```bash
-# 1. Install dependencies
+git clone https://github.com/yonzilch/srrm.git
+cd srrm
 pnpm install
-
-# 2. Copy the example env file and fill in your values
-cp apps/worker/.dev.vars.example apps/worker/.dev.vars
-
-# 3. Start the Worker (Wrangler dev server)
-pnpm --filter @srrm/worker dev
-
-# 4. In a separate terminal, start the frontend
-pnpm --filter @srrm/web dev
-```
-
-The Worker runs at `http://localhost:8787` and the web UI at `http://localhost:5173`.
-
-**Type checking across all packages:**
-
-```bash
-pnpm -r exec tsc --noEmit
 ```
 
 ---
 
-## Deployment
-
-### 1. Create the D1 database
+### 2. Create the D1 database
 
 ```bash
 wrangler d1 create srrm-db
-# Copy the database_id from the output and add it to apps/worker/wrangler.toml
 ```
 
-Run migrations:
+Copy the `database_id` from the output — you'll need it in the next step.
+
+Run the schema migration:
 
 ```bash
-wrangler d1 execute srrm-db --file=apps/worker/src/db/schema.sql
+wrangler d1 execute srrm-db \
+  --file=apps/worker/src/db/schema.sql \
+  --remote
 ```
 
-### 2. Set secrets
+---
 
-Set each required secret via Wrangler so they are never stored in plain text:
+### 3. Configure `wrangler.toml`
 
-```bash
-wrangler secret put GITHUB_TOKEN
-wrangler secret put JWT_SECRET          # generate with: openssl rand -hex 32
-wrangler secret put SSO_CLIENT_SECRET
-```
+Open `apps/worker/wrangler.toml` and fill in your values.
 
-### 3. Deploy
+---
 
-srrm uses a **single Worker + Static Assets** architecture. Cloudflare Workers natively supports serving static assets (GA), no need for Cloudflare Pages.
+### 4. Register the OIDC callback URL
 
-One deploy, one domain, everything served:
+In your OIDC provider, add the following as an allowed redirect URI:
 
 ```
-srrm.example.com
-    ├── /api/*     → Hono handles (Worker logic)
-    ├── /feed.xml  → Hono handles (Worker logic)
-    └── /*         → React SPA static files served automatically
+https://srrm.example.com/api/auth/callback
 ```
 
-Just one command:
+---
+
+### 5. Deploy
+
+>SRRM uses a single Worker + Static Assets architecture. Cloudflare Workers natively supports serving static assets (GA), no need for Cloudflare Pages.
 
 ```bash
 pnpm run deploy
 ```
 
-This will build the React SPA first, then deploy the Worker with static assets bundled. Cron triggers are also registered in the same Worker.
+This builds the React SPA, then deploys the Worker with static assets and Cron triggers in one step.
 
-For preview deployment:
+**Architecture** — everything runs on a single Worker, one domain:
+
+```
+srrm.example.com
+    ├── /api/*     → Hono (API + auth)
+    ├── /feed.xml  → RSS feed
+    └── /*         → React SPA (static assets)
+```
+
+For a preview deployment (separate URL, non-production):
 
 ```bash
 pnpm run deploy:preview
+```
 
 ---
 
-## Environment Variables
+### Local development
 
-Variables are injected via `wrangler secret put` in production, or a `.dev.vars` file during local development.
+Create `apps/worker/.dev.vars` with your secrets (this file is gitignored):
 
-### Required
+> **All variables are listed and configured in `apps/worker/wrangler.toml`.**
 
-| Variable | Description |
-|---|---|
-| `JWT_SECRET` | Random string ≥ 32 bytes used to sign session JWTs |
-| `SSO_ISSUER_URL` | OIDC Provider issuer URL (e.g. `https://sso.example.com`) |
-| `SSO_CLIENT_ID` | OIDC Client ID |
-| `SSO_CLIENT_SECRET` | OIDC Client Secret |
-| `SSO_CALLBACK_URL` | OAuth callback URL (e.g. `https://srrm.example.com/api/auth/callback`) |
-| `ADMIN_EMAILS` | Comma-separated list of emails granted admin access |
-| `APP_BASE_URL` | Public URL of the frontend (e.g. `https://srrm.example.com`) |
+> You may get more info from [Cloudflare Workers docs](https://developers.cloudflare.com/workers/wrangler/environments)
 
-### Optional
+Then start both services:
 
-| Variable | Default | Description |
-|---|---|---|
-| `GITHUB_TOKEN` | GitHub PAT — prevents rate limiting and enables private repo access |
-| `SCRAPE_INTERVAL_MINUTES` | `60` | How often to poll for new releases |
-| `RSS_PUBLIC` | `true` | Whether the `/feed.xml` endpoint requires authentication |
-| `GOTIFY_URL` | — | Gotify server base URL |
-| `GOTIFY_TOKEN` | — | Gotify application token |
-| `GOTIFY_PRIORITY` | `5` | Gotify message priority (1–10) |
-| `APPRISE_API_URL` | — | Apprise HTTP API base URL |
-| `APPRISE_URLS` | — | Comma-separated Apprise notification targets |
-| `APPRISE_TAG` | — | Apprise tag to filter notification targets |
-| `WEBHOOK_URL` | — | Webhook target URL |
-| `WEBHOOK_SECRET` | — | HMAC-SHA256 signing secret for webhook payloads |
-| `WEBHOOK_METHOD` | `POST` | HTTP method used for webhook delivery |
-
----
+```bash
+pnpm run dev:worker   # http://localhost:8787
+pnpm run dev:web      # http://localhost:5173
+```
 
 ## API Reference
 
