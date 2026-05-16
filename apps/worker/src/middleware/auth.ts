@@ -1,16 +1,11 @@
 import { Hono } from 'hono';
+import { getCookie } from 'hono/cookie';
 import { verifyToken } from '../services/jwt';
 import type { Env } from '@srrm/shared';
 import type { User } from '@srrm/shared';
 
 function getTokenFromCookie(c: any): string | null {
-  const cookieHeader = c.req.header('Cookie');
-  if (!cookieHeader) return null;
-  const match = cookieHeader
-    .split(';')
-    .map((pair: string) => pair.trim())
-    .find((pair: string) => pair.startsWith('srrm_token='));
-  return match ? match.split('=')[1] : null;
+  return getCookie(c, 'srrm_token') ?? null;
 }
 
 // authMiddleware: validates JWT and attaches user to context

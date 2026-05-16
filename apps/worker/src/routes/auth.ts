@@ -1,16 +1,13 @@
 import { Hono } from 'hono';
+import { setCookie, getCookie, deleteCookie } from 'hono/cookie';
 import { createToken, verifyToken } from '../services/jwt';
 import { getOIDCConfig } from '../services/oidc';
 import type { Env } from '@srrm/shared';
 
+const JWT_EXPIRES_IN = 60 * 60 * 24; // 24 小时
+
 function getTokenFromCookie(c: any): string | null {
-  const cookieHeader = c.req.header('Cookie');
-  if (!cookieHeader) return null;
-  const match = cookieHeader
-    .split(';')
-    .map((pair: string) => pair.trim())
-    .find((pair: string) => pair.startsWith('srrm_token='));
-  return match ? match.split('=')[1] : null;
+  return getCookie(c, 'srrm_token') ?? null;
 }
 
 export const authRoutes = new Hono<{ Bindings: Env }>();
@@ -110,7 +107,12 @@ authRoutes.get('/callback', async (c) => {
     const user = { email, role, exp: 0 };
     const jwt = await createToken(user, JWT_SECRET);
 
-    c.header('Set-Cookie', `srrm_token=${jwt}; HttpOnly; Path=/; SameSite=Lax; MaxAge=${60 * 60 * 24}`);
+    setCookie(c, 'srrm_token', jwt, {
+      httpOnly: true,
+      path: '/',
+      sameSite: 'Lax',
+      maxAge: JWT_EXPIRES_IN,
+    });
 
     const redirectTo = c.req.query('redirect_to') || '/';
     return c.redirect(redirectTo);
@@ -122,7 +124,7 @@ authRoutes.get('/callback', async (c) => {
 
 // 登出
 authRoutes.post('/logout', (c) => {
-  c.header('Set-Cookie', 'srrm_token=; HttpOnly; Path=/; MaxAge=0');
+  deleteCookie(c, 'srrm_token', { path: '/' });
   return c.json({ success: true });
 });
 
