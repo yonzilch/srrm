@@ -70,6 +70,10 @@ JWT_EXPIRES_IN = "2592000"
 # Default: true
 RSS_PUBLIC = "true"
 
+# Custom favicon URL — proxy /favicon.ico to this address
+# Leave empty to serve from ASSETS (default: /vite.svg)
+FAVICON_URL = ""
+
 # --- Gotify Notification ---
 # Gotify server base URL
 GOTIFY_URL = ""
