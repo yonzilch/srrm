@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { setCookie, getCookie, deleteCookie } from 'hono/cookie';
-import { createToken, verifyToken } from '../services/jwt';
+import { createToken, verifyToken, getJwtExpiresIn } from '../services/jwt';
 import { getOIDCConfig } from '../services/oidc';
 import type { Env } from '@srrm/shared';
 
@@ -105,13 +105,14 @@ authRoutes.get('/callback', async (c) => {
     const role: 'admin' | 'viewer' = adminEmails.includes(email) ? 'admin' : 'viewer';
 
     const user = { email, role, exp: 0 };
-    const jwt = await createToken(user, JWT_SECRET);
+    const jwt = await createToken(user, JWT_SECRET, c.env);
 
+    const expiresIn = getJwtExpiresIn(c.env);
     setCookie(c, 'srrm_token', jwt, {
       httpOnly: true,
       path: '/',
       sameSite: 'Lax',
-      maxAge: JWT_EXPIRES_IN,
+      ...(expiresIn > 0 ? { maxAge: expiresIn } : {}),
     });
 
     const redirectTo = c.req.query('redirect_to') || '/';

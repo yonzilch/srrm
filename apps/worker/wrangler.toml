@@ -62,6 +62,10 @@ GITHUB_TOKEN = ""
 # Default: 60
 SCRAPE_INTERVAL_MINUTES = "60"
 
+# JWT session expiry time in seconds
+# Default: 2592000 (30 days)
+JWT_EXPIRES_IN = "2592000"
+
 # Whether the /feed.xml endpoint requires authentication
 # Default: true
 RSS_PUBLIC = "true"
