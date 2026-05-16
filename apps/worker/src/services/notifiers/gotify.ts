@@ -7,7 +7,7 @@ export class GotifyNotifier implements Notifier {
   readonly name = 'Gotify';
 
   isConfigured(env: Env): boolean {
-    return !!(env.GOTIFY_URL && env.GOTIFY_TOKEN);
+    return !!(env.GOTIFY_URL && env.GOTIFY_TOKEN && env.GOTIFY_PRIORITY);
   }
 
   async send(release: Release, env: Env): Promise<void> {
