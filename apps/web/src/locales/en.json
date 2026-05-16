@@ -41,7 +41,7 @@
   "settings.testSuccess": "✓ Test notification sent",
   "settings.testFailure": "✗ Send failed: {error}",
   "settings.about": "About",
-  "settings.version": "SRRM v1.3.5",
+  "settings.version": "SRRM v1.3.7",
   "settings.aboutDesc": "Aggregates releases from GitHub, GitLab, Forgejo, and Gitea.",
   "repos.remove": "Remove",
   "repos.removing": "Removing...",

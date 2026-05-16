@@ -71,7 +71,7 @@ JWT_EXPIRES_IN = "2592000"
 RSS_PUBLIC = "true"
 
 # Custom favicon URL — proxy /favicon.ico to this address
-# Leave empty to serve from ASSETS (default: /vite.svg)
+# Leave empty to serve from ASSETS (default: srrm/apps/web/public/SRRM.svg)
 FAVICON_URL = ""
 
 # --- Gotify Notification ---

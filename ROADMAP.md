@@ -14,7 +14,7 @@
 | **存储方案** | Cloudflare D1 (SQLite) |
 | **认证方案** | OAuth2 SSO → JWT → HttpOnly Cookie（无服务端 Session） |
 | **通知方案** | RSS + Gotify / Webhook / Apprise |
-| **当前版本** | v1.3.6 |
+| **当前版本** | v1.3.7 |
 
 ---
 
