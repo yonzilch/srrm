@@ -144,9 +144,12 @@ export default function Settings() {
 
       <div className="rounded-xl border border-ctp-surface1 bg-ctp-surface0/40 p-6">
         <h2 className="text-xl font-semibold mb-4 text-ctp-text">{t('settings.about')}</h2>
-        <div className="space-y-1">
-          <p className="text-sm text-ctp-subtext1">{t('settings.version')}</p>
-          <p className="text-sm text-ctp-overlay0">{t('settings.aboutDesc')}</p>
+        <div className="flex items-center gap-4">
+          <img src="/SRRM.svg" alt="SRRM" className="h-16 w-16" />
+          <div className="space-y-1">
+            <p className="text-sm text-ctp-subtext1">{t('settings.version')}</p>
+            <p className="text-sm text-ctp-overlay0">{t('settings.aboutDesc')}</p>
+          </div>
         </div>
       </div>
     </div>
