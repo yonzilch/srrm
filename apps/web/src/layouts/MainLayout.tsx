@@ -77,8 +77,8 @@ export default function Layout() {
   const closeMobileNav = () => setMobileNavOpen(false);
 
   return (
-    <div className="min-h-screen bg-ctp-base text-ctp-text">
-      <nav className="border-b border-white/10 bg-ctp-mantle/60 backdrop-blur-sm">
+    <div className="min-h-screen text-ctp-text relative z-10">
+      <nav className="border-b border-white/10 bg-ctp-mantle/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-14 items-center justify-between">
             {/* 左侧 Logo + 导航 */}

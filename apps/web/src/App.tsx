@@ -8,10 +8,12 @@ import Repos from './pages/admin/Repos';
 import Settings from './pages/admin/Settings';
 import { AuthProvider } from './hooks/useAuth';
 import ScrollToTop from './components/ScrollToTop';
+import BackgroundImage from './components/BackgroundImage';
 
 function App() {
   return (
     <AuthProvider>
+      <BackgroundImage />
       <Routes>
         {/* 公开路由 */}
         <Route path="/login" element={<Login />} />
