@@ -179,9 +179,9 @@ function ReleaseCard({ release, isOpen, onToggle }: {
             ) : null}
           </div>
 
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
             {release.name && release.name !== release.tagName && (
-              <span className="text-ctp-overlay0 text-xs truncate flex-1 min-w-0">
+              <span className="text-ctp-overlay0 text-xs break-all flex-1 min-w-0">
                 {release.name}
               </span>
             )}
