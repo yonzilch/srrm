@@ -7,6 +7,7 @@ import { ProtectedRoute } from './router';
 import Repos from './pages/admin/Repos';
 import Settings from './pages/admin/Settings';
 import { AuthProvider } from './hooks/useAuth';
+import ScrollToTop from './components/ScrollToTop';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         {/* 兜底 */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <ScrollToTop />
     </AuthProvider>
   );
 }

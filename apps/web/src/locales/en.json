@@ -65,6 +65,7 @@
   "common.all": "All",
   "common.previous": "Previous",
   "common.next": "Next",
+  "common.backToTop": "Back to top",
   "common.supportedPlatforms": "Supports GitHub, GitLab, Forgejo, and Gitea (including Codeberg and other self-hosted instances)",
   "filter.placeholder": "Filter by repository...",
   "lang.en": "English",
