@@ -32,7 +32,12 @@ app.route('/api/releases', releasesRoutes);
 app.use('/api/admin/*', authMiddleware);
 app.route('/api/admin', adminRoutes);
 
-// 全局错误处理
+// GET /api/config — 获取公开配置（供前端读取运行时环境变量）
+app.get('/api/config', (c) => {
+  return c.json({
+    backgroundUrl: c.env.BACKGROUND_URL ?? '',
+  });
+});
 app.onError((err, c) => {
   console.error('[App Error]', err);
   return c.json({ error: 'Internal Server Error' }, 500);

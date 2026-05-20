@@ -7,24 +7,35 @@ import './index.css';
 import { I18nProvider } from './contexts/I18nContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 
-const bgUrl = import.meta.env.VITE_BACKGROUND_URL as string | undefined;
-if (bgUrl) {
-  document.documentElement.classList.add('has-bg');
-  document.documentElement.style.setProperty('--bg-image-url', `url(${bgUrl})`);
+// Fetch runtime config (background URL) before rendering
+async function initApp() {
+  try {
+    const res = await fetch('/api/config');
+    if (res.ok) {
+      const config = await res.json() as { backgroundUrl?: string };
+      if (config.backgroundUrl) {
+        document.documentElement.classList.add('has-bg');
+        document.documentElement.style.setProperty('--bg-image-url', `url(${config.backgroundUrl})`);
+      }
+    }
+  } catch {
+    // Silently ignore — background is optional
+  }
+
+  const queryClient = new QueryClient();
+  ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <I18nProvider>
+            <ThemeProvider>
+              <App />
+            </ThemeProvider>
+          </I18nProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </React.StrictMode>,
+  );
 }
 
-const queryClient = new QueryClient();
-
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <I18nProvider>
-          <ThemeProvider>
-            <App />
-          </ThemeProvider>
-        </I18nProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
-  </React.StrictMode>
-);
+initApp();
