@@ -17,6 +17,8 @@
   "releases.checkForUpdates": "检查更新",
   "releases.recentlyUpdated": "最近更新 {time}",
   "releases.pageInfo": "第 {current} 页 / 共 {total} 页",
+  "releases.goToPage": "跳转到页",
+  "releases.pageInputPlaceholder": "页码",
   "repos.title": "仓库管理",
   "repos.monitoring": "正在监控 {count} 个仓库",
   "repos.add": "添加仓库",

@@ -73,6 +73,22 @@ export default function Home() {
     }
   };
 
+  const [pageInput, setPageInput] = useState('');
+
+  const handleGoToPage = () => {
+    const p = parseInt(pageInput, 10);
+    if (isFinite(p) && p >= 1 && p <= totalPages) {
+      setCurrentPage(p);
+      setPageInput('');
+    }
+  };
+
+  const handlePageInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleGoToPage();
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="max-w-5xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -133,7 +149,7 @@ export default function Home() {
 
       {/* 分页控件 */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-4 mt-6 pb-8">
+        <div className="flex items-center justify-center gap-3 mt-6 pb-8 flex-wrap">
           <button
             onClick={handlePrevPage}
             disabled={currentPage <= 1}
@@ -145,8 +161,35 @@ export default function Home() {
             {t('common.previous')}
           </button>
           <span className="text-sm text-ctp-subtext1">
-            {t('releases.pageInfo', { current: currentPage, total: totalPages })}
+            {t('releases.pageInfo', { current: String(currentPage), total: String(totalPages) })}
           </span>
+          {/* Page jump input */}
+          <div className="inline-flex items-center gap-1.5">
+            <label htmlFor="page-jump-input" className="sr-only">
+              {t('releases.goToPage')}
+            </label>
+            <input
+              id="page-jump-input"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={pageInput}
+              onChange={(e) => setPageInput(e.target.value.replace(/[^0-9]/g, ''))}
+              onKeyDown={handlePageInputKeyDown}
+              placeholder={t('releases.pageInputPlaceholder')}
+              className="w-14 px-2 py-1.5 text-center text-sm bg-ctp-surface0 text-ctp-text rounded-md border border-ctp-surface2 focus:outline-none focus:border-ctp-blue focus:ring-1 focus:ring-ctp-blue/40 placeholder:text-ctp-overlay0"
+            />
+            <button
+              onClick={handleGoToPage}
+              disabled={!pageInput || !isFinite(parseInt(pageInput, 10)) || parseInt(pageInput, 10) < 1 || parseInt(pageInput, 10) > totalPages}
+              className="px-2.5 py-1.5 text-sm bg-ctp-surface1 text-ctp-subtext1 rounded-md border border-ctp-surface2 hover:bg-ctp-surface2 hover:text-ctp-text transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-medium"
+              title={t('releases.goToPage')}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </button>
+          </div>
           <button
             onClick={handleNextPage}
             disabled={currentPage >= totalPages}

@@ -17,6 +17,8 @@
   "releases.checkForUpdates": "Check for Updates",
   "releases.recentlyUpdated": "Last updated {time}",
   "releases.pageInfo": "Page {current} / {total}",
+  "releases.goToPage": "Go to page",
+  "releases.pageInputPlaceholder": "#",
   "repos.title": "Repositories",
   "repos.monitoring": "Monitoring {count} repositories",
   "repos.add": "Add Repository",
