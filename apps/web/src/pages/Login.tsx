@@ -28,7 +28,7 @@ export default function Login() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-ctp-crust flex items-center justify-center text-ctp-text">
+    <div className="min-h-screen flex items-center justify-center text-ctp-text">
       <div className="w-full max-w-md space-y-6 px-4">
         <div className="text-center">
           <h2 className="text-2xl font-bold tracking-tight">

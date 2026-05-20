@@ -36,6 +36,7 @@ app.route('/api/admin', adminRoutes);
 app.get('/api/config', (c) => {
   return c.json({
     backgroundUrl: c.env.BACKGROUND_URL ?? '',
+    backgroundTransparent: c.env.BACKGROUND_TRANSPARENT ?? '0.85',
   });
 });
 app.onError((err, c) => {

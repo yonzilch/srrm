@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 
 export default function BackgroundImage() {
   const [url, setUrl] = useState<string | null>(null);
+  const [opacity, setOpacity] = useState<number>(0.85);
 
   useEffect(() => {
     let cancelled = false;
@@ -11,7 +12,13 @@ export default function BackgroundImage() {
       .then((config) => {
         if (!cancelled && config?.backgroundUrl) {
           setUrl(config.backgroundUrl);
+          const raw = config.backgroundTransparent;
+          if (raw !== undefined && raw !== '') {
+            const n = parseFloat(raw);
+            if (isFinite(n) && n >= 0 && n <= 1) setOpacity(n);
+          }
           document.body.classList.add('has-bg');
+          document.body.style.setProperty('--bg-opacity', String(opacity));
         }
       })
       .catch(() => {});

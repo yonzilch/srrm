@@ -64,6 +64,9 @@ export type Env = {
 
   // Background image URL (可选，自定义背景图片)
   BACKGROUND_URL?: string;
+
+  // Background overlay opacity 0-1 (可选，默认 0.85)
+  BACKGROUND_TRANSPARENT?: string;
 };
 
 /**
