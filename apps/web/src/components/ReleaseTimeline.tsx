@@ -179,18 +179,18 @@ function ReleaseCard({ release, isOpen, onToggle }: {
             ) : null}
           </div>
 
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
+          <div className="flex items-center gap-2 mt-1">
             {release.name && release.name !== release.tagName && (
-              <span className="text-ctp-overlay0 text-xs break-all flex-1 min-w-0">
+              <span className="text-ctp-overlay0 text-sm break-all flex-1 min-w-0">
                 {release.name}
               </span>
             )}
 
-            <span className="text-[11px] text-ctp-overlay0 shrink-0">
+            <span className="text-sm text-ctp-overlay0 shrink-0 ml-auto">
               {relativeTime(release.publishedAt)}
             </span>
             <span
-              className={`text-[10px] text-ctp-overlay0 transition-transform duration-200 shrink-0 ${
+              className={`text-sm text-ctp-overlay0 transition-transform duration-200 shrink-0 ${
                 isOpen ? 'rotate-180' : ''
               }`}
             >
