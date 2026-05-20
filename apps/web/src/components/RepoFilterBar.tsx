@@ -12,9 +12,11 @@ export default function RepoFilterBar({ options, value, onChange }: RepoFilterBa
 
   return (
     <div className="mb-4">
-      <label className="flex items-center gap-2 text-sm font-medium text-ctp-subtext1">
-        <span className="text-ctp-overlay0">🔍</span>
-        {t('filter.placeholder')}
+      <label className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 text-sm font-medium text-ctp-subtext1">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="text-ctp-overlay0">🔍</span>
+          {t('filter.placeholder')}
+        </span>
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
