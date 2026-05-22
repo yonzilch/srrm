@@ -65,3 +65,5 @@ apps/web/dist/
 apps/worker/dist/
 packages/shared/dist/
 apps/worker/.wrangler/
+
+.direnv/
