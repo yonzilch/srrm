@@ -14,7 +14,7 @@
 ## How It Works
 
 ```mermaid
-flowchart LR
+flowchart TD
     Cron[⏱️ Cron Trigger<br/>default: 60 min] -- Trigger --> B[⚙️ Cloudflare Workers<br/>Hono API + Cron]
     B -- Fetches releases --> D[🌐 Git Repos API<br/>GitHub / GitLab / Codeberg / Gitea]
     

@@ -14,7 +14,7 @@
 ## 工作原理
 
 ```mermaid
-flowchart LR
+flowchart TD
     Cron[⏱️ 定时触发器<br/>默认：60 分钟] -- 触发 --> B[⚙️ Cloudflare Workers<br/>Hono API + Cron]
     B -- 获取发布版本 --> D[🌐 Git 平台 API<br/>GitHub / GitLab / Codeberg / Gitea]
     
