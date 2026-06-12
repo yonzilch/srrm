@@ -13,7 +13,9 @@
     devShells.${system}.default = pkgs.mkShell {
       buildInputs = with pkgs; [
         nodejs
+        pgformatter
         pnpm
+        prettier
         wrangler
       ];
 
