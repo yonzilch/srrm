@@ -1,83 +1,92 @@
 // Hono App 入口
-import { Hono } from 'hono';
-import { authRoutes } from './routes/auth';
-import { releasesRoutes } from './routes/releases';
-import { adminRoutes } from './routes/admin';
-import { feedRoute } from './routes/feed';
-import { authMiddleware } from './middleware/auth';
-import { getConfig, getLastRun } from './services/db';
-import { validateEnv } from './env';
-import type { Env } from '@srrm/shared';
+import { Hono } from "hono";
+import { authRoutes } from "./routes/auth";
+import { releasesRoutes } from "./routes/releases";
+import { adminRoutes } from "./routes/admin";
+import { feedRoute } from "./routes/feed";
+import { authMiddleware } from "./middleware/auth";
+import { getConfig, getLastRun } from "./services/db";
+import { validateEnv } from "./env";
+import type { Env } from "@srrm/shared";
 
 function getCorsHeaders(request: Request): Record<string, string> {
   // credentials: 'include' 要求 Allow-Origin 不能为 '*'，必须回显具体 origin
-  const origin = request.headers.get('Origin') ?? '*';
+  const origin = request.headers.get("Origin") ?? "*";
   return {
-    'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Max-Age': '86400',
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Credentials": "true",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Max-Age": "86400",
   };
 }
 
 const app = new Hono<{ Bindings: Env }>();
 
 // 路由挂载顺序：公开路由在前，受保护路由在后
-app.route('/api/auth', authRoutes);
-app.route('/feed.xml', feedRoute);
-app.route('/api/releases', releasesRoutes);
+app.route("/api/auth", authRoutes);
+app.route("/feed.xml", feedRoute);
+app.route("/api/releases", releasesRoutes);
 
 // Admin 受保护路由
-app.use('/api/admin/*', authMiddleware);
-app.route('/api/admin', adminRoutes);
+app.use("/api/admin/*", authMiddleware);
+app.route("/api/admin", adminRoutes);
 
 // GET /api/config — 获取公开配置（供前端读取运行时环境变量）
-app.get('/api/config', (c) => {
+app.get("/api/config", (c) => {
   return c.json({
-    backgroundUrl: c.env.BACKGROUND_URL ?? '',
-    backgroundTransparent: c.env.BACKGROUND_TRANSPARENT ?? '0.85',
+    backgroundUrl: c.env.BACKGROUND_URL ?? "",
+    backgroundTransparent: c.env.BACKGROUND_TRANSPARENT ?? "0.85",
   });
 });
 app.onError((err, c) => {
-  console.error('[App Error]', err);
-  return c.json({ error: 'Internal Server Error' }, 500);
+  console.error("[App Error]", err);
+  return c.json({ error: "Internal Server Error" }, 500);
 });
 
 // 模块 Worker 模式：手动路由分发
 export default {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(
+    request: Request,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<Response> {
     // --- CORS preflight ---
-    if (request.method === 'OPTIONS') {
+    if (request.method === "OPTIONS") {
       return new Response(null, { headers: getCorsHeaders(request) });
     }
 
     const url = new URL(request.url);
     let response: Response;
 
-    if (url.pathname.startsWith('/api') || url.pathname === '/feed.xml') {
+    if (
+      url.pathname.startsWith("/api") ||
+      url.pathname === "/feed.xml"
+    ) {
       response = await app.fetch(request, env, ctx);
-    } else if (url.pathname === '/favicon.ico') {
+    } else if (url.pathname === "/favicon.ico") {
       const faviconUrl = env.FAVICON_URL;
       if (faviconUrl) {
         const faviconRes = await fetch(faviconUrl);
         if (faviconRes.ok) {
           const headers = new Headers(faviconRes.headers);
-          headers.set('Access-Control-Allow-Origin', '*');
-          headers.set('Cache-Control', 'public, max-age=86400');
+          headers.set("Access-Control-Allow-Origin", "*");
+          headers.set("Cache-Control", "public, max-age=86400");
           response = new Response(faviconRes.body, {
             status: faviconRes.status,
             headers,
           });
         } else {
-          response = new Response('Not Found', { status: 404 });
+          response = new Response("Not Found", { status: 404 });
         }
       } else {
-        response = await (env.ASSETS?.fetch(request) ?? new Response('Not Found', { status: 404 }));
+        response = await (env.ASSETS?.fetch(request) ??
+          new Response("Not Found", { status: 404 }));
       }
     } else {
       // SPA 前端路由：未匹配 API 的请求交给 Workers Assets 返回静态文件
-      response = await (env.ASSETS?.fetch(request) ?? new Response('Not Found', { status: 404 }));
+      response = await (env.ASSETS?.fetch(request) ??
+        new Response("Not Found", { status: 404 }));
     }
 
     // 添加 CORS headers
@@ -93,22 +102,23 @@ export default {
 // Scheduled handler - runs every 5 minutes (configured in wrangler.toml)
 export async function scheduled(
   controller: ScheduledController,
-  env: Env
+  env: Env,
 ): Promise<void> {
   const missing = validateEnv(env);
   if (missing.length > 0) {
-    throw new Error(`Missing required env vars: ${missing.join(', ')}`);
+    throw new Error(`Missing required env vars: ${missing.join(", ")}`);
   }
 
   const lastRun = await getLastRun(env.DB);
-  const interval = Number(env.SCRAPE_INTERVAL_MINUTES || '60') * 60 * 1000;
+  const interval =
+    Number(env.SCRAPE_INTERVAL_MINUTES || "60") * 60 * 1000;
 
   if (Date.now() - lastRun < interval) {
-    console.log('[Cron] Skipping: not yet time for next scrape');
+    console.log("[Cron] Skipping: not yet time for next scrape");
     return;
   }
 
-  console.log('[Cron] Triggering scheduled scrape...');
-  const { runScraper } = await import('./services/scraper');
+  console.log("[Cron] Triggering scheduled scrape...");
+  const { runScraper } = await import("./services/scraper");
   await runScraper(env);
 }

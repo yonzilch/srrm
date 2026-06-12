@@ -21,6 +21,6 @@ export interface Release {
 
 export interface User {
   email: string;
-  role: 'admin' | 'viewer';
+  role: "admin" | "viewer";
   exp: number;
 }

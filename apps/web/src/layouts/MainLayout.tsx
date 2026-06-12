@@ -1,9 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
-import { useI18n } from '../contexts/I18nContext';
+import React, { useState, useEffect } from "react";
+import { Link, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import { useI18n } from "../contexts/I18nContext";
 
-function NavLink({ to, children, onClick }: { to: string; children: React.ReactNode; onClick?: () => void }) {
+function NavLink({
+  to,
+  children,
+  onClick,
+}: {
+  to: string;
+  children: React.ReactNode;
+  onClick?: () => void;
+}) {
   const location = useLocation();
   const active = location.pathname === to;
   return (
@@ -12,8 +20,8 @@ function NavLink({ to, children, onClick }: { to: string; children: React.ReactN
       onClick={onClick}
       className={`inline-flex items-center px-1 pt-1 text-sm font-medium transition-colors ${
         active
-          ? 'border-b-2 border-ctp-blue text-ctp-text'
-          : 'border-b-2 border-transparent text-ctp-overlay0 hover:text-ctp-subtext1 hover:border-ctp-surface1'
+          ? "border-b-2 border-ctp-blue text-ctp-text"
+          : "border-b-2 border-transparent text-ctp-overlay0 hover:text-ctp-subtext1 hover:border-ctp-surface1"
       }`}
     >
       {children}
@@ -21,7 +29,15 @@ function NavLink({ to, children, onClick }: { to: string; children: React.ReactN
   );
 }
 
-function MobileNavLink({ to, children, onClick }: { to: string; children: React.ReactNode; onClick?: () => void }) {
+function MobileNavLink({
+  to,
+  children,
+  onClick,
+}: {
+  to: string;
+  children: React.ReactNode;
+  onClick?: () => void;
+}) {
   const location = useLocation();
   const active = location.pathname === to;
   return (
@@ -30,8 +46,8 @@ function MobileNavLink({ to, children, onClick }: { to: string; children: React.
       onClick={onClick}
       className={`block px-4 py-3 text-sm font-medium transition-colors border-l-2 ${
         active
-          ? 'border-ctp-blue text-ctp-text bg-ctp-blue/5'
-          : 'border-transparent text-ctp-subtext1 hover:text-ctp-text hover:bg-white/5'
+          ? "border-ctp-blue text-ctp-text bg-ctp-blue/5"
+          : "border-transparent text-ctp-subtext1 hover:text-ctp-text hover:bg-white/5"
       }`}
     >
       {children}
@@ -54,10 +70,10 @@ export default function Layout() {
   // 取邮箱首字母作为头像
   const initials = user?.email
     ? user.email.charAt(0).toUpperCase()
-    : '?';
+    : "?";
 
   const toggleLocale = () => {
-    setLocale(locale === 'en' ? 'zh' : 'en');
+    setLocale(locale === "en" ? "zh" : "en");
     setLangMenuOpen(false);
   };
 
@@ -69,9 +85,11 @@ export default function Layout() {
 
   // Close mobile nav on resize to desktop
   useEffect(() => {
-    const onResize = () => { if (window.innerWidth >= 640) setMobileNavOpen(false); };
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    const onResize = () => {
+      if (window.innerWidth >= 640) setMobileNavOpen(false);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   const closeMobileNav = () => setMobileNavOpen(false);
@@ -83,15 +101,20 @@ export default function Layout() {
           <div className="flex h-14 items-center justify-between">
             {/* 左侧 Logo + 导航 */}
             <div className="flex items-center gap-6">
-              <Link to="/" className="text-xl font-bold tracking-tight text-ctp-text">
+              <Link
+                to="/"
+                className="text-xl font-bold tracking-tight text-ctp-text"
+              >
                 SRRM
               </Link>
               <div className="hidden sm:flex sm:items-center sm:gap-1">
-                <NavLink to="/">{t('nav.releases')}</NavLink>
-                {user?.role === 'admin' && (
+                <NavLink to="/">{t("nav.releases")}</NavLink>
+                {user?.role === "admin" && (
                   <>
-                    <NavLink to="/admin">{t('nav.repos')}</NavLink>
-                    <NavLink to="/admin/settings">{t('nav.settings')}</NavLink>
+                    <NavLink to="/admin">{t("nav.repos")}</NavLink>
+                    <NavLink to="/admin/settings">
+                      {t("nav.settings")}
+                    </NavLink>
                   </>
                 )}
               </div>
@@ -109,13 +132,13 @@ export default function Layout() {
                   className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm text-ctp-subtext1 hover:text-ctp-text hover:bg-white/5 transition-colors border border-transparent hover:border-white/10"
                 >
                   <span className="text-xs font-medium">
-                    {locale === 'en' ? '🇬🇧' : '🇨🇳'}
+                    {locale === "en" ? "🇬🇧" : "🇨🇳"}
                   </span>
                   <span className="hidden sm:inline">
-                    {locale === 'en' ? 'EN' : '中文'}
+                    {locale === "en" ? "EN" : "中文"}
                   </span>
                   <svg
-                    className={`h-3 w-3 text-ctp-overlay0 transition-transform duration-200 ${langMenuOpen ? 'rotate-180' : ''}`}
+                    className={`h-3 w-3 text-ctp-overlay0 transition-transform duration-200 ${langMenuOpen ? "rotate-180" : ""}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -131,21 +154,21 @@ export default function Layout() {
                 {langMenuOpen && (
                   <div className="absolute right-0 mt-1 w-32 rounded-xl border border-ctp-surface1 bg-ctp-mantle shadow-lg py-1 z-30">
                     <button
-                      onClick={() => setLocale('en')}
+                      onClick={() => setLocale("en")}
                       className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-                        locale === 'en'
-                          ? 'text-ctp-blue bg-ctp-blue/10'
-                          : 'text-ctp-subtext1 hover:bg-white/5'
+                        locale === "en"
+                          ? "text-ctp-blue bg-ctp-blue/10"
+                          : "text-ctp-subtext1 hover:bg-white/5"
                       }`}
                     >
                       🇬🇧 English
                     </button>
                     <button
-                      onClick={() => setLocale('zh')}
+                      onClick={() => setLocale("zh")}
                       className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-                        locale === 'zh'
-                          ? 'text-ctp-blue bg-ctp-blue/10'
-                          : 'text-ctp-subtext1 hover:bg-white/5'
+                        locale === "zh"
+                          ? "text-ctp-blue bg-ctp-blue/10"
+                          : "text-ctp-subtext1 hover:bg-white/5"
                       }`}
                     >
                       🇨🇳 中文
@@ -166,9 +189,11 @@ export default function Layout() {
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-ctp-surface1 text-xs font-medium text-ctp-subtext1">
                       {initials}
                     </span>
-                    <span className="hidden sm:inline text-ctp-subtext1">{user.email}</span>
+                    <span className="hidden sm:inline text-ctp-subtext1">
+                      {user.email}
+                    </span>
                     <svg
-                      className={`h-3.5 w-3.5 text-ctp-overlay0 transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`}
+                      className={`h-3.5 w-3.5 text-ctp-overlay0 transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -187,7 +212,7 @@ export default function Layout() {
                         onClick={handleLogout}
                         className="block w-full text-left px-4 py-2 text-sm text-ctp-subtext1 hover:bg-white/5 transition-colors"
                       >
-                        {t('nav.signOut')}
+                        {t("nav.signOut")}
                       </button>
                     </div>
                   )}
@@ -198,7 +223,7 @@ export default function Layout() {
                     to="/login"
                     className="text-sm text-ctp-subtext1 hover:text-ctp-text transition-colors"
                   >
-                    {t('nav.signIn')}
+                    {t("nav.signIn")}
                   </Link>
                 )
               )}
@@ -210,12 +235,32 @@ export default function Layout() {
                 aria-label="Toggle navigation"
               >
                 {mobileNavOpen ? (
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 ) : (
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
                   </svg>
                 )}
               </button>
@@ -227,11 +272,20 @@ export default function Layout() {
         {mobileNavOpen && (
           <div className="sm:hidden border-t border-white/10 bg-ctp-mantle/95 backdrop-blur-sm">
             <div className="py-2">
-              <MobileNavLink to="/" onClick={closeMobileNav}>{t('nav.releases')}</MobileNavLink>
-              {user?.role === 'admin' && (
+              <MobileNavLink to="/" onClick={closeMobileNav}>
+                {t("nav.releases")}
+              </MobileNavLink>
+              {user?.role === "admin" && (
                 <>
-                  <MobileNavLink to="/admin" onClick={closeMobileNav}>{t('nav.repos')}</MobileNavLink>
-                  <MobileNavLink to="/admin/settings" onClick={closeMobileNav}>{t('nav.settings')}</MobileNavLink>
+                  <MobileNavLink to="/admin" onClick={closeMobileNav}>
+                    {t("nav.repos")}
+                  </MobileNavLink>
+                  <MobileNavLink
+                    to="/admin/settings"
+                    onClick={closeMobileNav}
+                  >
+                    {t("nav.settings")}
+                  </MobileNavLink>
                 </>
               )}
             </div>

@@ -37,7 +37,7 @@ body.has-bg {
 }
 
 body.has-bg::after {
-  content: '';
+  content: "";
   position: fixed;
   inset: 0;
   z-index: -1;
@@ -99,7 +99,7 @@ a:hover {
 }
 
 .release-notes.prose a[href^="http"]::after {
-  content: ' ↗';
+  content: " ↗";
   font-size: 0.75em;
   opacity: 0.6;
 }

@@ -4,10 +4,19 @@ import {
   upsertReleases,
   getLastRun,
   saveLastRun,
-} from './db';
-import { buildFeedUrl, buildAuthHeaders, buildReleaseUrl } from './platform';
-import { parseFeed, isPrerelease, stripHtmlToText, sanitizeHtmlForStorage } from './feed';
-import type { Env, Repo, Release, Platform } from '@srrm/shared';
+} from "./db";
+import {
+  buildFeedUrl,
+  buildAuthHeaders,
+  buildReleaseUrl,
+} from "./platform";
+import {
+  parseFeed,
+  isPrerelease,
+  stripHtmlToText,
+  sanitizeHtmlForStorage,
+} from "./feed";
+import type { Env, Repo, Release, Platform } from "@srrm/shared";
 
 /** 按 publishedAt 日期分组 */
 function groupByDate(releases: Release[]): Record<string, Release[]> {
@@ -24,36 +33,61 @@ function groupByDate(releases: Release[]): Record<string, Release[]> {
 }
 
 /** 从 Atom entry 中提取 tag name */
-function extractTagName(entry: { link: string; id: string }, repo: Repo): string {
+function extractTagName(
+  entry: { link: string; id: string },
+  repo: Repo,
+): string {
   try {
     const url = new URL(entry.link);
-    const parts = url.pathname.split('/').filter(Boolean);
+    const parts = url.pathname.split("/").filter(Boolean);
     if (parts.length > 0) {
       return decodeURIComponent(parts[parts.length - 1]);
     }
   } catch {
     // ignore
   }
-  const parts = entry.id.split('/');
+  const parts = entry.id.split("/");
   return parts[parts.length - 1] || entry.id;
 }
 
 /** 抓取单个仓库的 releases（通过 Atom feed） */
-async function fetchRepoReleases(repo: Repo, env: Env): Promise<Release[]> {
+async function fetchRepoReleases(
+  repo: Repo,
+  env: Env,
+): Promise<Release[]> {
   const feedUrl = buildFeedUrl(repo);
-  const headers = buildAuthHeaders(repo.platform as Platform, env as unknown as Record<string, string | undefined>);
+  const headers = buildAuthHeaders(
+    repo.platform as Platform,
+    env as unknown as Record<string, string | undefined>,
+  );
 
   const res = await fetch(feedUrl, { headers });
 
   if (res.status === 404) {
-    console.warn('[Scraper] Feed not found for ' + repo.fullName + ' (' + repo.platform + '): ' + feedUrl);
+    console.warn(
+      "[Scraper] Feed not found for " +
+        repo.fullName +
+        " (" +
+        repo.platform +
+        "): " +
+        feedUrl,
+    );
     return [];
   }
   if (res.status === 401 || res.status === 403) {
-    throw new Error('Authentication failed for ' + repo.fullName + ' (' + repo.platform + '): ' + res.status);
+    throw new Error(
+      "Authentication failed for " +
+        repo.fullName +
+        " (" +
+        repo.platform +
+        "): " +
+        res.status,
+    );
   }
   if (!res.ok) {
-    throw new Error('Feed fetch error for ' + repo.fullName + ': ' + res.status);
+    throw new Error(
+      "Feed fetch error for " + repo.fullName + ": " + res.status,
+    );
   }
 
   const xml = await res.text();
@@ -85,23 +119,31 @@ async function fetchRepoReleases(repo: Repo, env: Env): Promise<Release[]> {
 }
 
 export async function runScraper(env: Env): Promise<void> {
-  console.log('[Scraper] Starting release scrape...');
+  console.log("[Scraper] Starting release scrape...");
 
   const repos: Repo[] = await getRepos(env.DB as any);
   if (repos.length === 0) {
-    console.log('[Scraper] No repos configured, skipping');
+    console.log("[Scraper] No repos configured, skipping");
     return;
   }
 
-  console.log('[Scraper] Scraping ' + repos.length + ' repositories...');
+  console.log(
+    "[Scraper] Scraping " + repos.length + " repositories...",
+  );
 
   // 并发获取所有仓库的 releases
   const promises = repos.map((repo: Repo) =>
-    fetchRepoReleases(repo, env)
-      .catch((err: unknown) => {
-        console.error('[Scraper] Failed to fetch ' + repo.fullName + ' (' + repo.platform + '):', err);
-        return [] as Release[];
-      }),
+    fetchRepoReleases(repo, env).catch((err: unknown) => {
+      console.error(
+        "[Scraper] Failed to fetch " +
+          repo.fullName +
+          " (" +
+          repo.platform +
+          "):",
+        err,
+      );
+      return [] as Release[];
+    }),
   );
 
   const repoResults = await Promise.all(promises);
@@ -110,11 +152,13 @@ export async function runScraper(env: Env): Promise<void> {
   const newReleases = repoResults.flat();
 
   if (newReleases.length === 0) {
-    console.log('[Scraper] No new releases found');
+    console.log("[Scraper] No new releases found");
     return;
   }
 
-  console.log('[Scraper] Found ' + newReleases.length + ' new releases');
+  console.log(
+    "[Scraper] Found " + newReleases.length + " new releases",
+  );
 
   // 批量写入 D1（使用 upsertReleases 替代旧 KV 分片逻辑）
   const byDate = groupByDate(newReleases);
@@ -133,14 +177,16 @@ export async function runScraper(env: Env): Promise<void> {
 
   // 触发通知（仅对新插入的 release）
   if (allNewReleases.length > 0) {
-    console.log(`[Scraper] ${allNewReleases.length} new releases, dispatching notifications...`);
-    const { dispatchNotifications } = await import('./notifiers/index');
+    console.log(
+      `[Scraper] ${allNewReleases.length} new releases, dispatching notifications...`,
+    );
+    const { dispatchNotifications } = await import("./notifiers/index");
     await dispatchNotifications(allNewReleases, env);
   }
 
   // 更新最后抓取时间
   await saveLastRun(env.DB as any, Date.now());
-  console.log('[Scraper] Scrape completed');
+  console.log("[Scraper] Scrape completed");
 }
 
 /**
@@ -148,22 +194,38 @@ export async function runScraper(env: Env): Promise<void> {
  * 只抓取这一个仓库，完成后更新 D1
  */
 export async function scrapeRepo(repo: Repo, env: Env): Promise<void> {
-  console.log('[ScrapeRepo] Scraping single repo: ' + repo.fullName + ' (' + repo.platform + ')');
+  console.log(
+    "[ScrapeRepo] Scraping single repo: " +
+      repo.fullName +
+      " (" +
+      repo.platform +
+      ")",
+  );
 
   try {
     const releases = await fetchRepoReleases(repo, env);
     if (releases.length === 0) {
-      console.log('[ScrapeRepo] No releases found for ' + repo.fullName);
+      console.log(
+        "[ScrapeRepo] No releases found for " + repo.fullName,
+      );
       return;
     }
 
-    console.log('[ScrapeRepo] Found ' + releases.length + ' releases for ' + repo.fullName);
+    console.log(
+      "[ScrapeRepo] Found " +
+        releases.length +
+        " releases for " +
+        repo.fullName,
+    );
 
     // 批量写入 D1
     await upsertReleases(env.DB as any, releases);
 
-    console.log('[ScrapeRepo] Completed for ' + repo.fullName);
+    console.log("[ScrapeRepo] Completed for " + repo.fullName);
   } catch (err) {
-    console.error('[ScrapeRepo] Failed for ' + repo.fullName + ':', err);
+    console.error(
+      "[ScrapeRepo] Failed for " + repo.fullName + ":",
+      err,
+    );
   }
 }

@@ -1,16 +1,31 @@
-import React, { useState } from 'react';
-import { useReleases, useAdminRepos, useTriggerScrape } from '../hooks/useReleases';
-import ReleaseTimeline from '../components/ReleaseTimeline';
-import RepoFilterBar from '../components/RepoFilterBar';
-import FeedSubscribeButton from '../components/FeedSubscribeButton';
-import type { Repo } from '@srrm/shared';
-import { useI18n } from '../contexts/I18nContext';
+import React, { useState } from "react";
+import {
+  useReleases,
+  useAdminRepos,
+  useTriggerScrape,
+} from "../hooks/useReleases";
+import ReleaseTimeline from "../components/ReleaseTimeline";
+import RepoFilterBar from "../components/RepoFilterBar";
+import FeedSubscribeButton from "../components/FeedSubscribeButton";
+import type { Repo } from "@srrm/shared";
+import { useI18n } from "../contexts/I18nContext";
 
 // Spinner SVG
 function Spinner() {
   return (
-    <svg className="animate-spin h-4 w-4 text-ctp-text" viewBox="0 0 24 24" fill="none">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
+    <svg
+      className="animate-spin h-4 w-4 text-ctp-text"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth={4}
+      />
       <path
         className="opacity-75"
         fill="currentColor"
@@ -23,22 +38,29 @@ function Spinner() {
 // 格式化日期时间
 function formatDateTime(dateStr: string): string {
   const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
 export default function Home() {
   const { t } = useI18n();
   const [currentPage, setCurrentPage] = useState(1);
-  const { data, isLoading, error } = useReleases({ page: currentPage, limit: 50 });
-  const { data: repos = [], isLoading: reposLoading, refetch } = useAdminRepos();
+  const { data, isLoading, error } = useReleases({
+    page: currentPage,
+    limit: 50,
+  });
+  const {
+    data: repos = [],
+    isLoading: reposLoading,
+    refetch,
+  } = useAdminRepos();
   const triggerScrape = useTriggerScrape();
-  const [filter, setFilter] = useState<string>('');
+  const [filter, setFilter] = useState<string>("");
 
   const releases = data?.releases ?? [];
   const totalPages = data?.pagination?.pages ?? 1;
@@ -46,7 +68,9 @@ export default function Home() {
   const filteredReleases = releases
     ? releases.filter((r) => {
         if (!filter) return true;
-        return r.repoFullName.toLowerCase().includes(filter.toLowerCase());
+        return r.repoFullName
+          .toLowerCase()
+          .includes(filter.toLowerCase());
       })
     : [];
 
@@ -54,11 +78,13 @@ export default function Home() {
   const lastRunText = React.useMemo(() => {
     if (data?.releases && data.releases.length > 0) {
       const sorted = [...data.releases].sort(
-        (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+        (a, b) =>
+          new Date(b.publishedAt).getTime() -
+          new Date(a.publishedAt).getTime(),
       );
       return formatDateTime(sorted[0].publishedAt);
     }
-    return '—';
+    return "—";
   }, [data?.releases]);
 
   const handlePrevPage = () => {
@@ -73,18 +99,20 @@ export default function Home() {
     }
   };
 
-  const [pageInput, setPageInput] = useState('');
+  const [pageInput, setPageInput] = useState("");
 
   const handleGoToPage = () => {
     const p = parseInt(pageInput, 10);
     if (isFinite(p) && p >= 1 && p <= totalPages) {
       setCurrentPage(p);
-      setPageInput('');
+      setPageInput("");
     }
   };
 
-  const handlePageInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+  const handlePageInputKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (e.key === "Enter") {
       handleGoToPage();
     }
   };
@@ -95,7 +123,10 @@ export default function Home() {
         <HomeHeaderSkeleton />
         <div className="mt-4 space-y-1.5">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="bg-ctp-surface1 rounded-lg h-24 animate-pulse" />
+            <div
+              key={i}
+              className="bg-ctp-surface1 rounded-lg h-24 animate-pulse"
+            />
           ))}
         </div>
       </div>
@@ -106,7 +137,7 @@ export default function Home() {
     return (
       <div className="max-w-5xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center">
         <p className="text-ctp-red text-lg">
-          {t('common.error')}: {error.message}
+          {t("common.error")}: {error.message}
         </p>
       </div>
     );
@@ -119,10 +150,10 @@ export default function Home() {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-2xl font-bold text-ctp-text tracking-tight">
-              {t('releases.title')}
+              {t("releases.title")}
             </h1>
             <p className="text-sm text-ctp-subtext2 mt-1">
-              {t('releases.subtitle', {
+              {t("releases.subtitle", {
                 count: String(repos.length),
                 time: lastRunText,
               })}
@@ -130,14 +161,20 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-3">
             <FeedSubscribeButton />
-            <ScrapeButton triggerScrape={triggerScrape} reposLoading={reposLoading} />
+            <ScrapeButton
+              triggerScrape={triggerScrape}
+              reposLoading={reposLoading}
+            />
           </div>
         </div>
       </div>
 
       {/* 仓库筛选 */}
       <RepoFilterBar
-        options={repos.map((r: Repo) => ({ label: r.fullName, value: r.fullName }))}
+        options={repos.map((r: Repo) => ({
+          label: r.fullName,
+          value: r.fullName,
+        }))}
         value={filter}
         onChange={setFilter}
       />
@@ -155,18 +192,31 @@ export default function Home() {
             disabled={currentPage <= 1}
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-ctp-surface1 text-ctp-subtext1 rounded-lg border border-ctp-surface2 hover:bg-ctp-surface2 hover:text-ctp-text transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
           >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
-            {t('common.previous')}
+            {t("common.previous")}
           </button>
           <span className="text-sm text-ctp-subtext1">
-            {t('releases.pageInfo', { current: String(currentPage), total: String(totalPages) })}
+            {t("releases.pageInfo", {
+              current: String(currentPage),
+              total: String(totalPages),
+            })}
           </span>
           {/* Page jump input */}
           <div className="inline-flex items-center gap-1.5">
             <label htmlFor="page-jump-input" className="sr-only">
-              {t('releases.goToPage')}
+              {t("releases.goToPage")}
             </label>
             <input
               id="page-jump-input"
@@ -174,19 +224,36 @@ export default function Home() {
               inputMode="numeric"
               pattern="[0-9]*"
               value={pageInput}
-              onChange={(e) => setPageInput(e.target.value.replace(/[^0-9]/g, ''))}
+              onChange={(e) =>
+                setPageInput(e.target.value.replace(/[^0-9]/g, ""))
+              }
               onKeyDown={handlePageInputKeyDown}
-              placeholder={t('releases.pageInputPlaceholder')}
+              placeholder={t("releases.pageInputPlaceholder")}
               className="w-14 px-2 py-1.5 text-center text-sm bg-ctp-surface0 text-ctp-text rounded-md border border-ctp-surface2 focus:outline-none focus:border-ctp-blue focus:ring-1 focus:ring-ctp-blue/40 placeholder:text-ctp-overlay0"
             />
             <button
               onClick={handleGoToPage}
-              disabled={!pageInput || !isFinite(parseInt(pageInput, 10)) || parseInt(pageInput, 10) < 1 || parseInt(pageInput, 10) > totalPages}
+              disabled={
+                !pageInput ||
+                !isFinite(parseInt(pageInput, 10)) ||
+                parseInt(pageInput, 10) < 1 ||
+                parseInt(pageInput, 10) > totalPages
+              }
               className="px-2.5 py-1.5 text-sm bg-ctp-surface1 text-ctp-subtext1 rounded-md border border-ctp-surface2 hover:bg-ctp-surface2 hover:text-ctp-text transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-medium"
-              title={t('releases.goToPage')}
+              title={t("releases.goToPage")}
             >
-              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              <svg
+                className="h-3.5 w-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M14 5l7 7m0 0l-7 7m7-7H3"
+                />
               </svg>
             </button>
           </div>
@@ -195,15 +262,27 @@ export default function Home() {
             disabled={currentPage >= totalPages}
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-ctp-surface1 text-ctp-subtext1 rounded-lg border border-ctp-surface2 hover:bg-ctp-surface2 hover:text-ctp-text transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
           >
-            {t('common.next')}
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            {t("common.next")}
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </button>
         </div>
       )}
 
-      {filteredReleases.length === 0 && <EmptyState onAddRepo={() => {}} />}
+      {filteredReleases.length === 0 && (
+        <EmptyState onAddRepo={() => {}} />
+      )}
     </div>
   );
 }
@@ -217,43 +296,65 @@ function ScrapeButton({
   reposLoading: boolean;
 }) {
   const { t } = useI18n();
-  const [state, setState] = React.useState<'idle' | 'loading' | 'done'>('idle');
+  const [state, setState] = React.useState<"idle" | "loading" | "done">(
+    "idle",
+  );
 
   const handleClick = async () => {
-    setState('loading');
+    setState("loading");
     try {
       await triggerScrape();
-      setState('done');
-      setTimeout(() => setState('idle'), 2000);
+      setState("done");
+      setTimeout(() => setState("idle"), 2000);
     } catch {
-      setState('idle');
+      setState("idle");
     }
   };
 
   return (
     <button
       onClick={handleClick}
-      disabled={state === 'loading' || reposLoading}
+      disabled={state === "loading" || reposLoading}
       className="inline-flex items-center gap-2 px-4 py-2 bg-ctp-surface1 text-ctp-subtext1 rounded-lg border border-ctp-surface2 hover:bg-ctp-surface2 hover:text-ctp-text transition-colors disabled:opacity-50 text-sm font-medium"
     >
-      {state === 'loading' ? (
+      {state === "loading" ? (
         <>
           <Spinner />
-          <span>{t('releases.checking')}</span>
+          <span>{t("releases.checking")}</span>
         </>
-      ) : state === 'done' ? (
+      ) : state === "done" ? (
         <>
-          <svg className="h-4 w-4 text-ctp-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          <svg
+            className="h-4 w-4 text-ctp-green"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5 13l4 4L19 7"
+            />
           </svg>
-          <span>{t('releases.updated')}</span>
+          <span>{t("releases.updated")}</span>
         </>
       ) : (
         <>
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
           </svg>
-          <span>{t('releases.checkForUpdates')}</span>
+          <span>{t("releases.checkForUpdates")}</span>
         </>
       )}
     </button>
@@ -283,16 +384,16 @@ function EmptyState({ onAddRepo }: { onAddRepo: () => void }) {
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <div className="text-5xl mb-4">📡</div>
       <h3 className="text-lg font-semibold text-ctp-subtext1 mb-2">
-        {t('releases.empty')}
+        {t("releases.empty")}
       </h3>
       <p className="text-sm text-ctp-overlay0 max-w-md mb-6">
-        {t('releases.emptyDesc')}
+        {t("releases.emptyDesc")}
       </p>
       <a
         href="/admin"
         className="inline-flex items-center gap-2 px-4 py-2 bg-ctp-surface1 text-ctp-subtext1 rounded-lg border border-ctp-surface2 hover:bg-ctp-surface2 hover:text-ctp-text transition-colors text-sm font-medium"
       >
-        {t('releases.goToRepos')}
+        {t("releases.goToRepos")}
       </a>
     </div>
   );

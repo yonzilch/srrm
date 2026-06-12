@@ -1,5 +1,5 @@
 // 通知器基类与共享工具
-import type { Release, Env } from '@srrm/shared';
+import type { Release, Env } from "@srrm/shared";
 
 export interface NotifyResult {
   notifier: string;
@@ -18,24 +18,29 @@ export function formatNotification(release: Release): {
   title: string;
   message: string;
 } {
-  const platform = release.platform === 'github' ? 'GitHub'
-    : release.platform === 'gitlab' ? 'GitLab'
-    : release.platform === 'forgejo' ? 'Forgejo'
-    : 'Gitea';
+  const platform =
+    release.platform === "github"
+      ? "GitHub"
+      : release.platform === "gitlab"
+        ? "GitLab"
+        : release.platform === "forgejo"
+          ? "Forgejo"
+          : "Gitea";
 
-  const prerelease = release.isPrerelease ? ' [Pre-release]' : '';
+  const prerelease = release.isPrerelease ? " [Pre-release]" : "";
 
   return {
     title: `${release.repoFullName} ${release.tagName}${prerelease}`,
     message: [
       release.name || release.tagName,
-      '',
+      "",
       release.body
-        ? release.body.slice(0, 300) + (release.body.length > 300 ? '...' : '')
-        : '（无 Release Notes）',
-      '',
+        ? release.body.slice(0, 300) +
+          (release.body.length > 300 ? "..." : "")
+        : "（无 Release Notes）",
+      "",
       `🔗 ${release.htmlUrl}`,
       `📦 ${platform}`,
-    ].join('\n'),
+    ].join("\n"),
   };
 }

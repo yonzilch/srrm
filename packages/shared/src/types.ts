@@ -5,7 +5,7 @@
 /**
  * 支持的平台标识
  */
-export type Platform = 'github' | 'gitlab' | 'forgejo' | 'gitea';
+export type Platform = "github" | "gitlab" | "forgejo" | "gitea";
 
 /**
  * 应用环境变量（Hono Bindings）
@@ -73,15 +73,15 @@ export type Env = {
  * 监控的 Git 仓库
  */
 export interface Repo {
-  id: string;           // nanoid 生成
-  platform: string;     // 'github' | 'gitlab' | 'forgejo' | 'gitea'
-  baseUrl: string;      // 如 https://github.com
+  id: string; // nanoid 生成
+  platform: string; // 'github' | 'gitlab' | 'forgejo' | 'gitea'
+  baseUrl: string; // 如 https://github.com
   owner: string;
   repo: string;
-  fullName: string;     // "{owner}/{repo}"
-  repoUrl: string;      // 仓库访问 URL
-  addedAt: string;      // ISO 8601
-  addedBy: string;      // 添加者邮箱
+  fullName: string; // "{owner}/{repo}"
+  repoUrl: string; // 仓库访问 URL
+  addedAt: string; // ISO 8601
+  addedBy: string; // 添加者邮箱
   releaseCount?: number; // Release 数量（可选，由 stats 接口填充）
 }
 
@@ -89,18 +89,18 @@ export interface Repo {
  * Git Release 条目
  */
 export interface Release {
-  id: string;                   // GitHub release node_id
-  repoFullName: string;         // "{owner}/{repo}"
+  id: string; // GitHub release node_id
+  repoFullName: string; // "{owner}/{repo}"
   tagName: string;
   name: string;
-  body: string;                 // Markdown 格式的 Release Notes
-  bodyHtml?: string;            // 已渲染的 HTML（可选）
-  publishedAt: string;          // ISO 8601
+  body: string; // Markdown 格式的 Release Notes
+  bodyHtml?: string; // 已渲染的 HTML（可选）
+  publishedAt: string; // ISO 8601
   htmlUrl: string;
-  repoUrl?: string;             // 仓库页面 URL（可选）
+  repoUrl?: string; // 仓库页面 URL（可选）
   isPrerelease: boolean;
   isDraft: boolean;
-  platform?: string;            // 平台标识（可选，默认 github）
+  platform?: string; // 平台标识（可选，默认 github）
 }
 
 /**
@@ -108,8 +108,8 @@ export interface Release {
  */
 export interface User {
   email: string;
-  role: 'admin' | 'viewer';
-  exp: number;                  // Unix 时间戳（秒）
+  role: "admin" | "viewer";
+  exp: number; // Unix 时间戳（秒）
 }
 
 /**

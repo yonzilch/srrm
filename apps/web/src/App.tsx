@@ -1,14 +1,14 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './layouts/MainLayout';
-import Home from './pages/Home';
-import Login from './pages/Login';
-import { ProtectedRoute } from './router';
-import Repos from './pages/admin/Repos';
-import Settings from './pages/admin/Settings';
-import { AuthProvider } from './hooks/useAuth';
-import ScrollToTop from './components/ScrollToTop';
-import BackgroundImage from './components/BackgroundImage';
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Layout from "./layouts/MainLayout";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import { ProtectedRoute } from "./router";
+import Repos from "./pages/admin/Repos";
+import Settings from "./pages/admin/Settings";
+import { AuthProvider } from "./hooks/useAuth";
+import ScrollToTop from "./components/ScrollToTop";
+import BackgroundImage from "./components/BackgroundImage";
 
 function App() {
   return (

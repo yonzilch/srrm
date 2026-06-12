@@ -1,9 +1,9 @@
 // 通知器注册与分发入口
-import type { Env, Release } from '@srrm/shared';
-import type { Notifier, NotifyResult } from './base';
-import { GotifyNotifier } from './gotify';
-import { AppriseNotifier } from './apprise';
-import { WebhookNotifier } from './webhook';
+import type { Env, Release } from "@srrm/shared";
+import type { Notifier, NotifyResult } from "./base";
+import { GotifyNotifier } from "./gotify";
+import { AppriseNotifier } from "./apprise";
+import { WebhookNotifier } from "./webhook";
 
 /** 根据环境变量按需实例化已配置的通知器 */
 export function buildNotifiers(env: Env): Notifier[] {
@@ -12,7 +12,7 @@ export function buildNotifiers(env: Env): Notifier[] {
     new AppriseNotifier(),
     new WebhookNotifier(),
   ];
-  return all.filter(n => n.isConfigured(env));
+  return all.filter((n) => n.isConfigured(env));
 }
 
 /**
@@ -33,11 +33,19 @@ export async function dispatchNotifications(
       try {
         await notifier.send(release, env);
         results.push({ notifier: notifier.name, success: true });
-        console.log(`[Notify] ✓ ${notifier.name} → ${release.repoFullName} ${release.tagName}`);
+        console.log(
+          `[Notify] ✓ ${notifier.name} → ${release.repoFullName} ${release.tagName}`,
+        );
       } catch (e) {
         const error = e instanceof Error ? e.message : String(e);
-        results.push({ notifier: notifier.name, success: false, error });
-        console.error(`[Notify] ✗ ${notifier.name} → ${release.repoFullName} ${release.tagName}: ${error}`);
+        results.push({
+          notifier: notifier.name,
+          success: false,
+          error,
+        });
+        console.error(
+          `[Notify] ✗ ${notifier.name} → ${release.repoFullName} ${release.tagName}: ${error}`,
+        );
       }
     }
   }
@@ -46,7 +54,7 @@ export async function dispatchNotifications(
 }
 
 // 重新导出，方便外部引用
-export type { Notifier, NotifyResult } from './base';
-export { GotifyNotifier } from './gotify';
-export { AppriseNotifier } from './apprise';
-export { WebhookNotifier } from './webhook';
+export type { Notifier, NotifyResult } from "./base";
+export { GotifyNotifier } from "./gotify";
+export { AppriseNotifier } from "./apprise";
+export { WebhookNotifier } from "./webhook";

@@ -17,7 +17,9 @@ export default function Login() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch("/api/auth/me", { credentials: "include" });
+        const res = await fetch("/api/auth/me", {
+          credentials: "include",
+        });
         const data = await res.json();
         if (data.authenticated) navigate("/", { replace: true });
       } catch {
@@ -34,7 +36,9 @@ export default function Login() {
           <h2 className="text-2xl font-bold tracking-tight">
             {t("login.title")}
           </h2>
-          <p className="text-ctp-subtext1 mt-2">{t("login.subtitle")}</p>
+          <p className="text-ctp-subtext1 mt-2">
+            {t("login.subtitle")}
+          </p>
         </div>
         {error && (
           <div className="bg-ctp-red/10 border border-ctp-red/20 text-ctp-red px-4 py-3 rounded-lg text-sm">

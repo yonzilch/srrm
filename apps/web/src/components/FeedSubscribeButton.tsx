@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useI18n } from '../contexts/I18nContext';
+import React, { useState } from "react";
+import { useI18n } from "../contexts/I18nContext";
 
 // RSS SVG 图标
 function RssIcon({ className }: { className?: string }) {
@@ -26,11 +26,13 @@ export default function FeedSubscribeButton() {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.origin + '/feed.xml');
+      await navigator.clipboard.writeText(
+        window.location.origin + "/feed.xml",
+      );
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      alert('Failed to copy link');
+      alert("Failed to copy link");
     }
   };
 
@@ -41,7 +43,7 @@ export default function FeedSubscribeButton() {
         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-ctp-surface1 text-ctp-subtext1 text-sm rounded-lg border border-ctp-surface2 hover:bg-ctp-surface2 hover:text-ctp-text transition-colors"
       >
         <RssIcon className="h-4 w-4" />
-        {copied ? 'Copied!' : 'RSS'}
+        {copied ? "Copied!" : "RSS"}
       </button>
       <a
         href="/feed.xml"
@@ -49,7 +51,7 @@ export default function FeedSubscribeButton() {
         rel="noopener noreferrer"
         className="text-sm text-ctp-overlay0 hover:text-ctp-blue transition-colors"
       >
-        {t('feed.previewFeed')}
+        {t("feed.previewFeed")}
       </a>
     </div>
   );

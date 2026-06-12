@@ -1,16 +1,19 @@
-import type { Release, Repo, User } from '@srrm/shared';
+import type { Release, Repo, User } from "@srrm/shared";
 
-const BASE = import.meta.env.VITE_API_BASE ?? '';
+const BASE = import.meta.env.VITE_API_BASE ?? "";
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function request<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     ...init,
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...init?.headers },
   });
   if (res.status === 401) {
-    window.location.href = '/login';
-    throw new Error('Unauthorized');
+    window.location.href = "/login";
+    throw new Error("Unauthorized");
   }
   if (!res.ok) {
     const data = await res.json().catch(() => null);
@@ -22,14 +25,22 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 interface PaginatedResponse<T> {
   releases: T[];
-  pagination: { page: number; limit: number; total: number; pages: number };
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 }
 
 export const api = {
   releases: {
-    list: async (
-      params?: { date?: string; repo?: string; page?: number; limit?: number }
-    ): Promise<PaginatedResponse<Release>> => {
+    list: async (params?: {
+      date?: string;
+      repo?: string;
+      page?: number;
+      limit?: number;
+    }): Promise<PaginatedResponse<Release>> => {
       const qs = new URLSearchParams(params as Record<string, string>);
       return request<PaginatedResponse<Release>>(`/api/releases?${qs}`);
     },
@@ -37,33 +48,55 @@ export const api = {
   admin: {
     repos: {
       list: async () => {
-        const result = await request<{ repos: Repo[] }>('/api/admin/repos');
+        const result = await request<{ repos: Repo[] }>(
+          "/api/admin/repos",
+        );
         return result.repos;
       },
       stats: async (): Promise<Record<string, number>> => {
-        const result = await request<{ stats: Record<string, number> }>('/api/admin/repos/stats');
+        const result = await request<{ stats: Record<string, number> }>(
+          "/api/admin/repos/stats",
+        );
         return result.stats;
       },
       add: (body: { url: string } | { owner: string; repo: string }) =>
-        request<Repo>('/api/admin/repos', { method: 'POST', body: JSON.stringify(body) }),
+        request<Repo>("/api/admin/repos", {
+          method: "POST",
+          body: JSON.stringify(body),
+        }),
       remove: (id: string) =>
-        request<void>(`/api/admin/repos/${id}`, { method: 'DELETE' }),
+        request<void>(`/api/admin/repos/${id}`, { method: "DELETE" }),
     },
     scrape: {
-      trigger: () => request<void>('/api/admin/scrape/trigger', { method: 'POST' }),
+      trigger: () =>
+        request<void>("/api/admin/scrape/trigger", { method: "POST" }),
     },
     notify: {
-      status: () => request<{ name: string; configured: boolean }[]>('/api/admin/notify/status'),
-      test: () =>
-        request<{ ok: boolean; results: Array<{ notifier: string; success: boolean; error?: string }> }>(
-          '/api/admin/notify/test',
-          { method: 'POST' }
+      status: () =>
+        request<{ name: string; configured: boolean }[]>(
+          "/api/admin/notify/status",
         ),
+      test: () =>
+        request<{
+          ok: boolean;
+          results: Array<{
+            notifier: string;
+            success: boolean;
+            error?: string;
+          }>;
+        }>("/api/admin/notify/test", { method: "POST" }),
     },
   },
   auth: {
-    login: () => request<{ url: string }>('/api/auth/login', { method: 'GET' }),
-    me: () => request<{ authenticated: boolean; user?: User }>('/api/auth/me', { method: 'GET' }),
-    logout: () => request<{ success: boolean }>('/api/auth/logout', { method: 'POST' }),
+    login: () =>
+      request<{ url: string }>("/api/auth/login", { method: "GET" }),
+    me: () =>
+      request<{ authenticated: boolean; user?: User }>("/api/auth/me", {
+        method: "GET",
+      }),
+    logout: () =>
+      request<{ success: boolean }>("/api/auth/logout", {
+        method: "POST",
+      }),
   },
 };

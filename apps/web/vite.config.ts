@@ -1,5 +1,5 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -13,8 +13,8 @@ export default defineConfig({
   },
   // VITE_API_BASE 由运行时注入（见 public/index.html），不在构建时硬编码
   define: {
-    'import.meta.env.VITE_API_BASE': JSON.stringify(
-      process.env.VITE_API_BASE || ''
+    "import.meta.env.VITE_API_BASE": JSON.stringify(
+      process.env.VITE_API_BASE || "",
     ),
   },
 });

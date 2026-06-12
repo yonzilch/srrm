@@ -1,6 +1,11 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import type { User } from '@srrm/shared';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { useNavigate } from "react-router-dom";
+import type { User } from "@srrm/shared";
 
 interface AuthContextValue {
   user: User | undefined;
@@ -8,7 +13,9 @@ interface AuthContextValue {
   logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+const AuthContext = createContext<AuthContextValue | undefined>(
+  undefined,
+);
 
 function useAuthInternal(): AuthContextValue {
   const [user, setUser] = useState<User | undefined>(undefined);
@@ -20,7 +27,9 @@ function useAuthInternal(): AuthContextValue {
 
     const checkAuth = async () => {
       try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        const res = await fetch("/api/auth/me", {
+          credentials: "include",
+        });
         const data = await res.json();
         if (cancelled) return;
         if (data.authenticated && data.user) {
@@ -44,23 +53,34 @@ function useAuthInternal(): AuthContextValue {
   }, []);
 
   const logout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
     setUser(undefined);
-    navigate('/login');
+    navigate("/login");
   };
 
   return { user, loading, logout };
 }
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const value = useAuthInternal();
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error("useAuth must be used within AuthProvider");
   }
   return ctx;
 }

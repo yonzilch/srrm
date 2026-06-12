@@ -10,14 +10,18 @@ interface OIDCConfig {
 
 let cachedConfig: OIDCConfig | null = null;
 
-export async function getOIDCConfig(issuerUrl: string): Promise<OIDCConfig> {
+export async function getOIDCConfig(
+  issuerUrl: string,
+): Promise<OIDCConfig> {
   if (cachedConfig) return cachedConfig;
 
   const discoveryUrl = `${issuerUrl}/.well-known/openid-configuration`;
   const res = await fetch(discoveryUrl);
 
   if (!res.ok) {
-    throw new Error(`OIDC discovery failed: ${res.status} ${res.statusText} (${discoveryUrl})`);
+    throw new Error(
+      `OIDC discovery failed: ${res.status} ${res.statusText} (${discoveryUrl})`,
+    );
   }
 
   const data = (await res.json()) as {
@@ -26,7 +30,11 @@ export async function getOIDCConfig(issuerUrl: string): Promise<OIDCConfig> {
     userinfo_endpoint: string;
   };
 
-  if (!data.authorization_endpoint || !data.token_endpoint || !data.userinfo_endpoint) {
+  if (
+    !data.authorization_endpoint ||
+    !data.token_endpoint ||
+    !data.userinfo_endpoint
+  ) {
     throw new Error(`OIDC discovery incomplete at ${discoveryUrl}`);
   }
 

@@ -5,11 +5,11 @@
 /** 转义 HTML 特殊字符 */
 function escapeHtml(str: string): string {
   return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 /** 处理行内元素：粗体、斜体、删除线、行内代码、链接、图片、@mention、#issue */
@@ -25,25 +25,31 @@ function parseInline(text: string): string {
   });
 
   // 链接 [text](url)
-  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, linkText, url) => {
-    return `<a href="${escapeHtml(url)}">${parseInline(escapeHtml(linkText))}</a>`;
-  });
+  text = text.replace(
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    (_, linkText, url) => {
+      return `<a href="${escapeHtml(url)}">${parseInline(escapeHtml(linkText))}</a>`;
+    },
+  );
 
   // 粗体 **text**
-  text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
   // 粗体 __text__
-  text = text.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+  text = text.replace(/__([^_]+)__/g, "<strong>$1</strong>");
 
   // 斜体 *text*
-  text = text.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+  text = text.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, "<em>$1</em>");
   // 斜体 _text_
-  text = text.replace(/(?<!_)_([^_]+)_(?!_)/g, '<em>$1</em>');
+  text = text.replace(/(?<!_)_([^_]+)_(?!_)/g, "<em>$1</em>");
 
   // 删除线 ~~text~~
-  text = text.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+  text = text.replace(/~~([^~]+)~~/g, "<del>$1</del>");
 
   // @mention → 链接
-  text = text.replace(/@([a-zA-Z0-9_-]+)/g, ' <a href="https://github.com/$1">@$1</a> ');
+  text = text.replace(
+    /@([a-zA-Z0-9_-]+)/g,
+    ' <a href="https://github.com/$1">@$1</a> ',
+  );
 
   // #数字 → issue 链接
   text = text.replace(/#(\d+)/g, (_, num) => {
@@ -94,9 +100,9 @@ function getListIndent(line: string): number {
 /** 根据缩进调整列表栈 */
 function adjustListStack(
   result: string[],
-  stack: { type: 'ul' | 'ol'; indent: number }[],
+  stack: { type: "ul" | "ol"; indent: number }[],
   targetIndent: number,
-  listType: 'ul' | 'ol',
+  listType: "ul" | "ol",
 ): void {
   if (stack.length === 0) {
     stack.push({ type: listType, indent: targetIndent });
@@ -110,7 +116,10 @@ function adjustListStack(
     stack.push({ type: listType, indent: targetIndent });
     result.push(`<${listType}>`);
   } else if (targetIndent < current.indent) {
-    while (stack.length > 0 && stack[stack.length - 1].indent >= targetIndent) {
+    while (
+      stack.length > 0 &&
+      stack[stack.length - 1].indent >= targetIndent
+    ) {
       stack.pop();
       result.push(`</${listType}>`);
     }
@@ -131,7 +140,7 @@ function adjustListStack(
 /** 关闭所有嵌套列表 */
 function closeLists(
   result: string[],
-  stack: { type: 'ul' | 'ol'; indent: number }[],
+  stack: { type: "ul" | "ol"; indent: number }[],
 ): void {
   while (stack.length > 0) {
     const top = stack.pop()!;
@@ -145,15 +154,15 @@ function closeLists(
  *       无序列表、有序列表、引用、分割线、表格、换行
  */
 export function markdownToHtml(md: string): string {
-  if (!md) return '';
+  if (!md) return "";
 
-  const lines = md.split('\n');
+  const lines = md.split("\n");
   const result: string[] = [];
   let inCodeBlock = false;
-  let codeLang = '';
+  let codeLang = "";
   let inList = false;
-  let listType: 'ul' | 'ol' | null = null;
-  let listStack: { type: 'ul' | 'ol'; indent: number }[] = [];
+  let listType: "ul" | "ol" | null = null;
+  let listStack: { type: "ul" | "ol"; indent: number }[] = [];
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -161,9 +170,9 @@ export function markdownToHtml(md: string): string {
     // 代码块处理
     if (isFence(line)) {
       if (inCodeBlock) {
-        result.push('</pre></div>');
+        result.push("</pre></div>");
         inCodeBlock = false;
-        codeLang = '';
+        codeLang = "";
       } else {
         if (inList) {
           closeLists(result, listStack);
@@ -172,8 +181,10 @@ export function markdownToHtml(md: string): string {
           listType = null;
         }
         inCodeBlock = true;
-        codeLang = line.replace(/^```\s*/, '').trim();
-        const langAttr = codeLang ? ` data-lang="${escapeHtml(codeLang)}"` : '';
+        codeLang = line.replace(/^```\s*/, "").trim();
+        const langAttr = codeLang
+          ? ` data-lang="${escapeHtml(codeLang)}"`
+          : "";
         result.push(`<div class="code-block"><pre${langAttr}><code>`);
       }
       continue;
@@ -203,7 +214,7 @@ export function markdownToHtml(md: string): string {
         listStack = [];
         listType = null;
       }
-      result.push('<hr />');
+      result.push("<hr />");
       continue;
     }
 
@@ -216,38 +227,43 @@ export function markdownToHtml(md: string): string {
         listStack = [];
         listType = null;
       }
-      const content = line.replace(/^#{1,6}\s+/, '');
-      result.push(`<h${headingLevel}>${parseInline(escapeHtml(content))}</h${headingLevel}>`);
+      const content = line.replace(/^#{1,6}\s+/, "");
+      result.push(
+        `<h${headingLevel}>${parseInline(escapeHtml(content))}</h${headingLevel}>`,
+      );
       continue;
     }
 
     // 表格处理（简化版：| a | b |）
-    if (/^\s*\|/.test(line) && line.indexOf('|') !== -1) {
+    if (/^\s*\|/.test(line) && line.indexOf("|") !== -1) {
       if (inList) {
         closeLists(result, listStack);
         inList = false;
         listStack = [];
         listType = null;
       }
-      const cells = line.split('|').filter((c) => c !== '');
+      const cells = line.split("|").filter((c) => c !== "");
       const lastResult = result[result.length - 1];
-      if (!lastResult || lastResult.indexOf('<table') === -1) {
-        result.push('<table>');
+      if (!lastResult || lastResult.indexOf("<table") === -1) {
+        result.push("<table>");
       }
-      result.push('<tr>');
+      result.push("<tr>");
       for (const cell of cells) {
         result.push(`<td>${parseInline(escapeHtml(cell.trim()))}</td>`);
       }
-      result.push('</tr>');
+      result.push("</tr>");
       // 检查下一行是否是表头分隔行
-      const next = lines[i + 1] || '';
+      const next = lines[i + 1] || "";
       if (
         /^\s*\|[-\s|]+\|/.test(next) &&
-        next.split('|').filter(Boolean).every((c) => /^[\s\-:|]+$/.test(c))
+        next
+          .split("|")
+          .filter(Boolean)
+          .every((c) => /^[\s\-:|]+$/.test(c))
       ) {
         i++; // 跳过表头分隔行
       } else {
-        result.push('</table>');
+        result.push("</table>");
       }
       continue;
     }
@@ -255,15 +271,15 @@ export function markdownToHtml(md: string): string {
     // 无序列表项
     if (isUnorderedListItem(line)) {
       const indent = getListIndent(line);
-      const content = line.replace(/^\s*[-*+]\s+/, '');
+      const content = line.replace(/^\s*[-*+]\s+/, "");
 
       if (!inList) {
         inList = true;
-        listType = 'ul';
-        listStack = [{ type: 'ul', indent }];
-        result.push('<ul>');
+        listType = "ul";
+        listStack = [{ type: "ul", indent }];
+        result.push("<ul>");
       } else {
-        adjustListStack(result, listStack, indent, 'ul');
+        adjustListStack(result, listStack, indent, "ul");
       }
 
       result.push(`<li>${parseInline(escapeHtml(content))}</li>`);
@@ -273,15 +289,15 @@ export function markdownToHtml(md: string): string {
     // 有序列表项
     if (isOrderedListItem(line)) {
       const indent = getListIndent(line);
-      const content = line.replace(/^\s*\d+\.\s+/, '');
+      const content = line.replace(/^\s*\d+\.\s+/, "");
 
       if (!inList) {
         inList = true;
-        listType = 'ol';
-        listStack = [{ type: 'ol', indent }];
-        result.push('<ol>');
+        listType = "ol";
+        listStack = [{ type: "ol", indent }];
+        result.push("<ol>");
       } else {
-        adjustListStack(result, listStack, indent, 'ol');
+        adjustListStack(result, listStack, indent, "ol");
       }
 
       result.push(`<li>${parseInline(escapeHtml(content))}</li>`);
@@ -296,8 +312,10 @@ export function markdownToHtml(md: string): string {
         listStack = [];
         listType = null;
       }
-      const content = line.replace(/^\s*>\s?/, '');
-      result.push(`<blockquote>${parseInline(escapeHtml(content))}</blockquote>`);
+      const content = line.replace(/^\s*>\s?/, "");
+      result.push(
+        `<blockquote>${parseInline(escapeHtml(content))}</blockquote>`,
+      );
       continue;
     }
 
@@ -324,5 +342,5 @@ export function markdownToHtml(md: string): string {
     closeLists(result, listStack);
   }
 
-  return result.join('\n');
+  return result.join("\n");
 }

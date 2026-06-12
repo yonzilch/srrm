@@ -1,15 +1,15 @@
-import type { Platform, Repo } from '@srrm/shared';
+import type { Platform, Repo } from "@srrm/shared";
 
 /**
  * 已知 GitLab 实例域名（可扩展）
  * 注意：web 侧 utils/platform 需同步维护相同列表
  */
 const KNOWN_GITLAB_INSTANCES: string[] = [
-  'salsa.debian.org',
-  'invent.kde.org',
-  'gitlab.gnome.org',
-  'gitlab.freedesktop.org',
-  'source.puri.sm',
+  "salsa.debian.org",
+  "invent.kde.org",
+  "gitlab.gnome.org",
+  "gitlab.freedesktop.org",
+  "source.puri.sm",
 ];
 
 function hasSubstring(haystack: string, needle: string): boolean {
@@ -26,13 +26,18 @@ export function detectPlatform(input: string): {
   repo: string;
 } | null {
   // 不含 '//' → 当作 owner/repo 格式，默认 GitHub
-  if (!hasSubstring(input, '//')) {
-    const parts = input.split('/').filter(Boolean);
+  if (!hasSubstring(input, "//")) {
+    const parts = input.split("/").filter(Boolean);
     if (parts.length < 2) return null;
     const owner = parts[0];
-    const repo = parts[1].replace(/\.git$/, '');
+    const repo = parts[1].replace(/\.git$/, "");
     if (!owner || !repo) return null;
-    return { platform: 'github', baseUrl: 'https://github.com', owner, repo };
+    return {
+      platform: "github",
+      baseUrl: "https://github.com",
+      owner,
+      repo,
+    };
   }
 
   let url: URL;
@@ -43,54 +48,56 @@ export function detectPlatform(input: string): {
   }
 
   const host = url.hostname.toLowerCase();
-  const pathParts = url.pathname.split('/').filter(Boolean);
+  const pathParts = url.pathname.split("/").filter(Boolean);
   if (pathParts.length < 2) return null;
 
   const owner = pathParts[0];
-  const repo = pathParts[1].replace(/\.git$/, '');
+  const repo = pathParts[1].replace(/\.git$/, "");
   if (!owner || !repo) return null;
 
-  const baseUrl = url.protocol + '//' + host;
+  const baseUrl = url.protocol + "//" + host;
 
   // 1. github.com
-  if (host === 'github.com') {
-    return { platform: 'github', baseUrl, owner, repo };
+  if (host === "github.com") {
+    return { platform: "github", baseUrl, owner, repo };
   }
 
   // 2. GitLab：gitlab.com / *.gitlab.* / 已知实例
   //    自建 GitLab 通常有 gitlab. 子域名或在已知列表中
   if (
-    host === 'gitlab.com' ||
-    host.indexOf('.gitlab.') !== -1 ||
-    host.indexOf('gitlab.') === 0 ||
+    host === "gitlab.com" ||
+    host.indexOf(".gitlab.") !== -1 ||
+    host.indexOf("gitlab.") === 0 ||
     KNOWN_GITLAB_INSTANCES.indexOf(host) !== -1
   ) {
-    return { platform: 'gitlab', baseUrl, owner, repo };
+    return { platform: "gitlab", baseUrl, owner, repo };
   }
 
   // 3. Codeberg / Forgejo
-  if (host === 'codeberg.org' || host.indexOf('codeberg') !== -1) {
-    return { platform: 'forgejo', baseUrl, owner, repo };
+  if (host === "codeberg.org" || host.indexOf("codeberg") !== -1) {
+    return { platform: "forgejo", baseUrl, owner, repo };
   }
 
   // 4. 其他 → 通用 gitea/forgejo
-  return { platform: 'gitea', baseUrl, owner, repo };
+  return { platform: "gitea", baseUrl, owner, repo };
 }
 
 /**
  * 根据平台构建 Feed URL（Atom 1.0 或 RSS 2.0）
  */
-export function buildFeedUrl(repo: Pick<Repo, 'platform' | 'baseUrl' | 'owner' | 'repo'>): string {
-  const base = repo.baseUrl.replace(/\/$/, '');
+export function buildFeedUrl(
+  repo: Pick<Repo, "platform" | "baseUrl" | "owner" | "repo">,
+): string {
+  const base = repo.baseUrl.replace(/\/$/, "");
   const path = `${repo.owner}/${repo.repo}`;
 
   switch (repo.platform) {
-    case 'github':
+    case "github":
       return `${base}/${path}/releases.atom`;
-    case 'gitlab':
+    case "gitlab":
       return `${base}/${path}/-/releases.atom`;
-    case 'forgejo':
-    case 'gitea':
+    case "forgejo":
+    case "gitea":
       return `${base}/${path}/releases.rss`;
     default:
       return `${base}/${path}/releases.rss`;
@@ -100,20 +107,25 @@ export function buildFeedUrl(repo: Pick<Repo, 'platform' | 'baseUrl' | 'owner' |
 /**
  * 构建 release 页面 URL（htmlUrl）
  */
-export function buildReleaseUrl(repo: Pick<Repo, 'platform' | 'baseUrl' | 'owner' | 'repo'>, tagName: string): string {
-  const base = repo.baseUrl + '/' + repo.owner + '/' + repo.repo;
+export function buildReleaseUrl(
+  repo: Pick<Repo, "platform" | "baseUrl" | "owner" | "repo">,
+  tagName: string,
+): string {
+  const base = repo.baseUrl + "/" + repo.owner + "/" + repo.repo;
   const encodedTag = encodeURIComponent(tagName);
-  if (repo.platform === 'gitlab') {
-    return base + '/-/releases/' + encodedTag;
+  if (repo.platform === "gitlab") {
+    return base + "/-/releases/" + encodedTag;
   }
-  return base + '/releases/tag/' + encodedTag;
+  return base + "/releases/tag/" + encodedTag;
 }
 
 /**
  * 构建仓库页面 URL
  */
-export function buildRepoUrl(repo: Pick<Repo, 'baseUrl' | 'owner' | 'repo'>): string {
-  return repo.baseUrl + '/' + repo.owner + '/' + repo.repo;
+export function buildRepoUrl(
+  repo: Pick<Repo, "baseUrl" | "owner" | "repo">,
+): string {
+  return repo.baseUrl + "/" + repo.owner + "/" + repo.repo;
 }
 
 /**
@@ -122,31 +134,31 @@ export function buildRepoUrl(repo: Pick<Repo, 'baseUrl' | 'owner' | 'repo'>): st
  */
 export function buildAuthHeaders(
   platform: Platform,
-  env: Record<string, string | undefined>
+  env: Record<string, string | undefined>,
 ): Record<string, string> {
   const headers: Record<string, string> = {
-    'User-Agent': 'srrm/1.0',
+    "User-Agent": "srrm/1.0",
   };
 
   switch (platform) {
-    case 'github': {
-      const token = env['GITHUB_TOKEN'];
-      if (token) headers['Authorization'] = 'Bearer ' + token;
+    case "github": {
+      const token = env["GITHUB_TOKEN"];
+      if (token) headers["Authorization"] = "Bearer " + token;
       break;
     }
-    case 'gitlab': {
-      const token = env['GITLAB_TOKEN'];
-      if (token) headers['PRIVATE-TOKEN'] = token;
+    case "gitlab": {
+      const token = env["GITLAB_TOKEN"];
+      if (token) headers["PRIVATE-TOKEN"] = token;
       break;
     }
-    case 'forgejo': {
-      const token = env['FORGEJO_TOKEN'];
-      if (token) headers['Authorization'] = 'token ' + token;
+    case "forgejo": {
+      const token = env["FORGEJO_TOKEN"];
+      if (token) headers["Authorization"] = "token " + token;
       break;
     }
-    case 'gitea': {
-      const token = env['GITEA_TOKEN'];
-      if (token) headers['Authorization'] = 'token ' + token;
+    case "gitea": {
+      const token = env["GITEA_TOKEN"];
+      if (token) headers["Authorization"] = "token " + token;
       break;
     }
   }
